@@ -1,12 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  ssr: false,
   modules: [
     '@vite-pwa/nuxt',
     '@nuxt/ui',
     '@vueuse/nuxt',
     'nuxt-icon',
-    '@formkit/auto-animate/nuxt'
+    '@formkit/auto-animate/nuxt',
+    "@nuxtjs/supabase"
   ],
   pwa: {
     manifest: {
