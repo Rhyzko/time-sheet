@@ -1,6 +1,29 @@
 <script setup lang="ts">
-const fileSystem = useFileSystemAPI();
-fileSystem.checkPermission();
+const timeSheetRows = ref<TimeRow[]>([]);
+
+const formatMonthTable = (month: number) => {
+  const numDaysInMonth = new Date(2023, month, 0).getDate();
+  timeSheetRows.value = [];
+  for (let i = 1; i <= numDaysInMonth; i++) {
+    const date = new Date(2023, month - 1, i);
+    timeSheetRows.value.push({
+      date: useDateFormat(date, 'DD-MM').value,
+      client: '',
+      project: '',
+      timeSpent: 0,
+      comment: ''
+    });
+  }
+};
+
+const setMonth = async (unit: number) => {
+  console.log('setMonth');
+  currentDate.value = new Date(currentDate.value.setMonth(currentDate.value.getMonth() + unit));
+  formatMonthTable(currentDate.value.getMonth() + 1);
+};
+
+const currentDate = ref(new Date())
+
 const columns = [
   {
     key: 'splitDay'
@@ -31,30 +54,13 @@ const columns = [
   }
 ];
 
-const people = ref<TimeRow[]>([]);
 
-const formatted = useDateFormat(useNow(), 'YYYY-MM-DD HH:mm:ss');
-const test = () => {
-  console.log(people.value);
-};
 
-const formatMonthTable = (month: number) => {
-  const numDaysInMonth = new Date(2023, month, 0).getDate();
-  for (let i = 1; i <= numDaysInMonth; i++) {
-    const date = new Date(2023, month - 1, i);
-    people.value.push({
-      date: useDateFormat(date, 'DD-MM').value,
-      client: '',
-      project: '',
-      timeSpent: 0,
-      comment: ''
-    });
-  }
-};
+
 
 const splitDay = (row: any, index: number) => {
   console.log(index);
-  people.value.splice(index + 1, 0, {
+  timeSheetRows.value.splice(index + 1, 0, {
     date: row.date,
     client: '',
     project: '',
@@ -63,29 +69,18 @@ const splitDay = (row: any, index: number) => {
   });
 };
 
-formatMonthTable(10);
-
-const showDirectoryPicker = async () => {
-  await (window as any).showDirectoryPicker();
-};
-
 onMounted(async () => {
-  await fileSystem.checkPermission();
-  //Read each file's content
-  const files = await fileSystem.readFiles();
-  // Push it into the app's data
-  files.forEach((file) => {
-    const { name } = JSON.parse(file);
-    //crew.value.push(name);
-    console.log('name', name);
-  });
-});
+  setMonth(0)
+})
+
 </script>
 
 <template>
-  <UTable :columns="columns" :rows="people">
+  <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setMonth(-1)"
+    @nextMonth="setMonth(1)"></MonthBanner>
+  <UTable :columns="columns" :rows="timeSheetRows">
     <template #splitDay-data="{ row, index }">
-      <UIcon name="i-heroicons-plus" @click="splitDay(row, index)" />
+      <Icon name="i-heroicons-plus" @click="splitDay(row, index)" />
     </template>
     <template #date-data="{ row }">
       <UInput v-model="row.date"></UInput>
@@ -106,8 +101,6 @@ onMounted(async () => {
       <UInput v-model="row.comment"></UInput>
     </template>
   </UTable>
-  <UButton @click="test">Test</UButton>
-  <UButton @click="showDirectoryPicker">Folder</UButton>
 </template>
 
 <style lang="scss" scoped></style>

@@ -4,7 +4,9 @@ export default defineNuxtConfig({
   modules: [
     '@vite-pwa/nuxt',
     '@nuxt/ui',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
+    'nuxt-icon',
+    '@formkit/auto-animate/nuxt'
   ],
   pwa: {
     manifest: {
