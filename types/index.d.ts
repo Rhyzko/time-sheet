@@ -5,6 +5,8 @@ declare interface TimeRow {
     timeSpent?: number
     comment?: string
     amp?: string;
+    type?: 'work' | 'weekend' | 'off'
+    class?: string
   }
 
 declare interface Client {
