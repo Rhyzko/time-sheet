@@ -87,7 +87,11 @@ const setMonth = async (unit: number) => {
 };
 
 const setDayOff = (row: any, index: number) => {
-  timeSheetRowsStyled.value.splice(index, 1, { ...row, type: 'off', class: 'bg-red-100' })
+  timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, type: 'off', class: 'bg-red-100' })
+};
+
+const setDayOn = (row: any, index: number) => {
+  timeSheetRowsStyled.value.splice(index, 1, { ...row, type: 'work', class: 'bg-orange-100' })
 };
 
 const currentDate = ref(new Date())
@@ -131,7 +135,9 @@ const splitDay = (row: any, index: number) => {
     client: '',
     project: '',
     timeSpent: 0,
-    comment: ''
+    comment: '',
+    class: row.class,
+    type: row.type
   });
 };
 
@@ -167,25 +173,28 @@ const checkRow = (row: any) => {
       </template>
       <template #off-data="{ row, index }">
         <Icon name="i-material-symbols:beach-access" @click="setDayOff(row, index)" v-if="row.type === 'work'" />
+        <Icon v-if="row.type === 'off'" name="i-heroicons-arrow-uturn-left" @click="setDayOn(row, index)" />
         <span v-else></span>
       </template>
       <template #date-data="{ row }">
         <span> {{ row.date }}</span>
       </template>
       <template #client-data="{ row }">
-        <UInput v-model="row.client"></UInput>
+        <UInput v-model="row.client" v-if="row.type === 'work'"></UInput>
       </template>
       <template #project-data="{ row }">
-        <UInput v-model="row.project"></UInput>
+        <UInput v-model="row.project" v-if="row.type === 'work'"></UInput>
       </template>
       <template #timeSpent-data="{ row }">
-        <UInput v-model="row.timeSpent" class="w-14" @blur="checkRow(row)"></UInput>
+        <UInput v-model="row.timeSpent" class="w-14" @blur="checkRow(row)" v-if="row.type === 'work'" />
+        <span v-else></span>
       </template>
       <template #amp-data="{ row }">
-        <UInput v-model="row.amp"></UInput>
+        <UInput v-model="row.amp" v-if="row.type === 'work'" />
+        <span v-else></span>
       </template>
       <template #comment-data="{ row }">
-        <UInput v-model="row.comment"></UInput>
+        <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
       </template>
     </UTable>
   </div>

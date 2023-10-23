@@ -14,10 +14,14 @@ const signInWithAzure = async () => {
 </script>
 
 <template>
-    <h1>Login</h1>
-    <UButton @click="signInWithAzure">
-        <Icon name="mdi-azure" size="2em" class="mr-2"></Icon>Azure
-    </UButton>
+    <div class=" flex justify-center items-center">
+        <UCard>
+            <h1>Login with:</h1>
+            <UButton @click="signInWithAzure">
+                <Icon name="mdi-azure" size="2em" class="mr-2"></Icon>Azure
+            </UButton>
+        </UCard>
+    </div>
 </template>
 
 <style lang="scss" scoped></style>

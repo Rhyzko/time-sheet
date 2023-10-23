@@ -14,7 +14,8 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-icon',
     '@formkit/auto-animate/nuxt',
-    "@nuxtjs/supabase"
+    "@nuxtjs/supabase",
+    "@nuxt/image"
   ],
   pwa: {
     manifest: {

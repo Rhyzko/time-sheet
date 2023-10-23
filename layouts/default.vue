@@ -10,8 +10,9 @@ const logout = async () => {
 </script>
 
 <template>
-    <header class="text-center flex items-center align-middle">
-        <NuxtLink to="/">Default header content</NuxtLink>
+    <header class="appbar flex flex-row items-center">
+        <img src="/img/logo.png" width="50" class="ml-4" @click="router.push('/')" :class="'cursor-pointer'">
+        <NuxtLink to="/">Avatime-sheet</NuxtLink>
         <NuxtLink to="/settings">
             <Icon name="i-heroicons-cog-6-tooth" class="ml-auto"></Icon>
         </NuxtLink>
@@ -19,9 +20,24 @@ const logout = async () => {
             <Icon name="i-heroicons-arrow-right-on-rectangle" size="1.5rem" @click="logout" />
         </span>
     </header>
-    <main>
+    <main class="mainContent">
         <slot />
     </main>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.appbar {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 64px;
+    position: fixed;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 0, 0, 0));
+    backdrop-filter: 0.5rem;
+    transition: transform 3s ease-in-out;
+}
+
+.mainContent {
+    margin-top: 64px;
+}
+</style>
