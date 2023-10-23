@@ -13,11 +13,12 @@ const logout = async () => {
     <header class="appbar flex flex-row items-center">
         <img src="/img/logo.png" width="50" class="ml-4" @click="router.push('/')" :class="'cursor-pointer'">
         <NuxtLink to="/">Avatime-sheet</NuxtLink>
-        <NuxtLink to="/settings">
-            <Icon name="i-heroicons-cog-6-tooth" class="ml-auto"></Icon>
+        <NuxtLink to="/settings" class="ml-auto">
+            <UButton icon="i-heroicons-cog-6-tooth" class="ml-auto" />
         </NuxtLink>
-        <span class="ml-auto cursor-pointer">{{ user?.email }}
-            <Icon name="i-heroicons-arrow-right-on-rectangle" size="1.5rem" @click="logout" />
+        <ColorModeButton />
+        <span class="cursor-pointer ml-2">
+            <UButton icon="i-material-symbols-exit-to-app-rounded" @click="logout" />
         </span>
     </header>
     <main class="mainContent">

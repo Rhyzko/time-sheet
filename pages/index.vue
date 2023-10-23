@@ -10,6 +10,9 @@ const monthTimeSheet = ref<TimeSheet | undefined>(undefined);
 
 const user = useSupabaseUser();
 
+const edited = ref(false);
+const saveToast = useToast();
+
 const getTimeSheet = async () => {
   const { data, error } = await supabase.from('timesheets').select('*').eq('userId', user.value?.id ?? '').eq('label', useDateFormat(currentDate.value, 'YYYY-MM').value)
   if (error) {
@@ -27,8 +30,9 @@ const getTimeSheet = async () => {
           class: row.type === 'off' ? 'bg-red-100' : row.type === 'weekend' ? 'bg-gray-200' : 'py-0'
         }
       })
-      console.log(parseInt('01'))
-      timeSheetRowsStyled.value.filter(row => row.type === 'work' && row.date && parseInt(row.date.substring(0, 2)) <= new Date().getDate()).forEach((row) => {
+      timeSheetRowsStyled.value.filter(row => row.type === 'work'
+        && row.date && parseInt(row.date.substring(0, 2)) <= new Date().getDate()
+      ).forEach((row) => {
         checkRow(row);
       });
     }
@@ -52,6 +56,13 @@ const updateTimeSheet = async () => {
     console.error(error);
   } else {
     monthTimeSheet.value = data[0];
+    saveToast.add({
+      title: 'Time sheet saved',
+      description: 'Your time sheet has been saved',
+      icon: 'success',
+      timeout: 5000,
+    })
+    edited.value = false;
   }
 };
 
@@ -80,10 +91,9 @@ const formatMonthTable = (month: number) => {
 };
 
 const setMonth = async (unit: number) => {
-  console.log('setMonth');
   currentDate.value = new Date(currentDate.value.setMonth(currentDate.value.getMonth() + unit));
   await getTimeSheet();
-
+  edited.value = false;
 };
 
 const setDayOff = (row: any, index: number) => {
@@ -98,14 +108,11 @@ const currentDate = ref(new Date())
 
 let columns = [
   {
-    key: 'splitDay'
-  },
-  {
-    key: 'off'
+    key: 'actions'
   },
   {
     key: 'date',
-    label: 'date',
+    label: 'Date',
   },
   {
     key: 'client',
@@ -141,9 +148,18 @@ const splitDay = (row: any, index: number) => {
   });
 };
 
+const removeRow = (row: any, index: number) => {
+  timeSheetRowsStyled.value.splice(index, 1);
+  checkRow(row);
+};
+
 onMounted(async () => {
   setMonth(0)
 })
+
+watch(timeSheetRowsStyled, (newValue, oldValue) => {
+  edited.value = true;
+}, { deep: true })
 
 const checkRow = (row: any) => {
   const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date);
@@ -153,27 +169,33 @@ const checkRow = (row: any) => {
   });
 };
 
+window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
 <template>
-  <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setMonth(-1)"
-    @nextMonth="setMonth(1)"></MonthBanner>
-  {{ user?.id }}
-  <div v-if="!isTimeSheetCreated">
-    <UButton @click="createTimeSheet">Create</UButton>
-  </div>
-  <div v-else>
-    <UButton @click="updateTimeSheet">
-      <Icon name="i-heroicons-check"></Icon> Update
-    </UButton>
+  <section class="flex flex-row">
+    <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setMonth(-1)" class="mr-2"
+      @nextMonth="setMonth(1)"></MonthBanner>
+    <span v-if="!isTimeSheetCreated">
+      <UButton @click="createTimeSheet" icon="i-material-symbols-create-new-folder" />
+    </span>
+    <span v-else>
+      <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded" :disabled="!edited"
+        :color="edited ? 'primary' : 'gray'" />
+    </span>
+  </section>
+  <section v-if="isTimeSheetCreated">
     <UTable :columns="columns" :rows="timeSheetRowsStyled" :ui="{ td: { padding: 'py-1 px-1' } }">
-      <template #splitDay-data="{ row, index }">
-        <Icon name="i-heroicons-plus" @click="splitDay(row, index)" v-if="row.type === 'work'" />
+      <template #actions-data="{ row, index }">
+        <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date" icon="i-heroicons-minus"
+          @click="removeRow(row, index)">
+        </UButton>
+        <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'"></UButton>
         <span v-else></span>
-      </template>
-      <template #off-data="{ row, index }">
-        <Icon name="i-material-symbols:beach-access" @click="setDayOff(row, index)" v-if="row.type === 'work'" />
-        <Icon v-if="row.type === 'off'" name="i-heroicons-arrow-uturn-left" @click="setDayOn(row, index)" />
+        <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
+          v-if="row.type === 'work'" class="ml-2" />
+        <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left" @click="setDayOn(row, index)"
+          class="ml-2" />
         <span v-else></span>
       </template>
       <template #date-data="{ row }">
@@ -190,18 +212,22 @@ const checkRow = (row: any) => {
         <span v-else></span>
       </template>
       <template #amp-data="{ row }">
-        <UInput v-model="row.amp" v-if="row.type === 'work'" />
+        <span v-if="row.type === 'work'" class="flex flex-row">
+          <UInput v-model="row.amp" />
+          <UButton icon="i-heroicons-arrow-right-circle" class="ml-2" />
+        </span>
         <span v-else></span>
       </template>
       <template #comment-data="{ row }">
         <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
       </template>
     </UTable>
-  </div>
+  </section>
+  <section v-else>
+    <USkeleton class="h-12 mt-5 w-full" />
+    <USkeleton class="h-8 my-3 w-full" v-for="line in 10" />
+  </section>
+  <UNotifications />
 </template>
 
-<style lang="scss" scoped>
-td {
-  padding: 0 !important;
-}
-</style>
+<style lang="scss" scoped></style>

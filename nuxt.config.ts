@@ -8,6 +8,9 @@ export default defineNuxtConfig({
     }
   },
   ssr: false,
+  ui: {
+    icons: ['heroicons', 'material-symbols']
+  },
   modules: [
     '@vite-pwa/nuxt',
     '@nuxt/ui',

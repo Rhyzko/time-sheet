@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@iconify-json/material-symbols':
+    specifier: ^1.1.60
+    version: 1.1.60
   '@nuxt/ui':
     specifier: ^2.9.0
     version: 2.9.0(rollup@2.79.1)(vue@3.3.4)(webpack@5.89.0)
@@ -1757,6 +1760,12 @@ packages:
 
   /@iconify-json/heroicons@1.1.13:
     resolution: {integrity: sha512-WsRTTc0qGDreszIgL9uVpPSnRlM2bXaKmK3E0zpQZloUZQX3FokDqGFgc0UbJ+8np/ta571Ty+8n78mlMhEU8w==}
+    dependencies:
+      '@iconify/types': 2.0.0
+    dev: false
+
+  /@iconify-json/material-symbols@1.1.60:
+    resolution: {integrity: sha512-SUkRdmUQnKjcGLnVvBm88khjmS7HyJdP5/8FH6JenxcySVlt06mBuk8z14LmHwNf24alN+17JRb8AsgbPR3lHA==}
     dependencies:
       '@iconify/types': 2.0.0
     dev: false
@@ -4202,6 +4211,7 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+    requiresBuild: true
 
   /color-string@1.9.1:
     resolution: {integrity: sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==}
