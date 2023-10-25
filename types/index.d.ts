@@ -1,7 +1,7 @@
 declare interface TimeRow {
     date?: string
     client?: string
-    project?: string
+    subject?: string
     timeSpent?: number
     comment?: string
     amp?: string;
@@ -13,12 +13,6 @@ declare interface TimeRow {
 declare interface Client {
     label: string,
     id: number
-}
-
-declare interface Project {
-    label: string,
-    id: number,
-    clientId: number
 }
 
 declare interface TimeSheet {

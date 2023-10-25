@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Database } from '~/types/supabase';
 definePageMeta({
     validate: async (currentRoute) => {
         if (typeof currentRoute.params.dateId !== 'string') {
@@ -10,7 +11,6 @@ definePageMeta({
 })
 
 const route = useRoute()
-import type { Database } from '~/types/supabase';
 const supabase = useSupabaseClient<Database>();
 const timeSheetRows = ref<TimeRow[]>([]);
 const timeSheetRowsStyled = ref<TimeRow[]>([]);
@@ -93,7 +93,7 @@ const formatMonthTable = (month: number) => {
         timeSheetRowsStyled.value.push({
             date: useDateFormat(date, 'DD-MM').value,
             client: '',
-            project: '',
+            subject: '',
             timeSpent: 0,
             comment: '',
             type: getDayType(date)
@@ -136,8 +136,8 @@ let columns = [
         label: 'Client'
     },
     {
-        key: 'project',
-        label: 'Project'
+        key: 'subject',
+        label: 'Subject'
     },
     {
         key: 'timeSpent',
@@ -157,7 +157,7 @@ const splitDay = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index + 1, 0, {
         date: row.date,
         client: '',
-        project: '',
+        subject: '',
         timeSpent: 0,
         comment: '',
         class: row.class,
@@ -204,7 +204,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
             </span>
         </section>
         <section v-if="isTimeSheetCreated">
-            <UTable :columns="columns" :rows="timeSheetRowsStyled" :ui="{ td: { padding: 'py-1 px-1' } }">
+            <UTable :columns="columns" :rows="timeSheetRowsStyled" :ui="{ td: { padding: 'py-1 px-1' } }" v-auto-animate>
                 <template #actions-data="{ row, index }">
                     <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date" icon="i-heroicons-minus"
                         @click="removeRow(row, index)">
@@ -224,8 +224,9 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <template #client-data="{ row }">
                     <UInput v-model="row.client" v-if="row.type === 'work'"></UInput>
                 </template>
-                <template #project-data="{ row }">
-                    <UInput v-model="row.project" v-if="row.type === 'work'"></UInput>
+                <template #subject-data="{ row }">
+                    <UInput v-model="row.subject" v-if="row.type === 'work'"></UInput>
+                    <span v-else></span>
                 </template>
                 <template #timeSpent-data="{ row }">
                     <UInput v-model="row.timeSpent" class="w-14" @blur="checkRow(row)" v-if="row.type === 'work'" />

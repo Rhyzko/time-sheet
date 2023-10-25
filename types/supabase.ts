@@ -5,7 +5,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-  | TimeRow[]
 
 export interface Database {
   public: {
@@ -14,41 +13,19 @@ export interface Database {
         Row: {
           id: number
           label: string
+          tags: string | null
         }
         Insert: {
           id?: number
           label: string
+          tags?: string | null
         }
         Update: {
           id?: number
           label?: string
+          tags?: string | null
         }
         Relationships: []
-      }
-      projects: {
-        Row: {
-          clientId: number
-          id: number
-          label: string
-        }
-        Insert: {
-          clientId: number
-          id?: number
-          label: string
-        }
-        Update: {
-          clientId?: number
-          id?: number
-          label?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_clientId_fkey"
-            columns: ["clientId"]
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          }
-        ]
       }
       timesheets: {
         Row: {
@@ -60,14 +37,14 @@ export interface Database {
         Insert: {
           content?: Json | null
           id?: number
-          label?: string | null
-          userId?: string | null
+          label: string
+          userId: string
         }
         Update: {
           content?: Json | null
           id?: number
-          label?: string | null
-          userId?: string | null
+          label?: string
+          userId?: string
         }
         Relationships: [
           {
