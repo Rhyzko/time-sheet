@@ -5,6 +5,7 @@ declare interface TimeRow {
     timeSpent?: number
     comment?: string
     amp?: string;
+    ampFilled?: boolean;
     type?: 'work' | 'weekend' | 'off'
     class?: string
   }
