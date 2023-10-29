@@ -244,7 +244,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         v-if="row.type === 'work'" />
                 </template>
                 <template #subject-data="{ row }">
-                    <UInput v-model="row.subject" :ui="{ color: 'primary-100' }" v-if="row.type === 'work'"></UInput>
+                    <UInput v-model="row.subject" v-if="row.type === 'work'"></UInput>
                     <span v-else></span>
                 </template>
                 <template #timeSpent-data="{ row }">
