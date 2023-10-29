@@ -11,17 +11,20 @@ definePageMeta({
 })
 
 const route = useRoute()
-const supabase = useSupabaseClient<Database>();
-const timeSheetRows = ref<TimeRow[]>([]);
-const timeSheetRowsStyled = ref<TimeRow[]>([]);
-const isTimeSheetCreated = ref(false);
+const supabase = useSupabaseClient<Database>()
+const timeSheetRows = ref<TimeRow[]>([])
+const timeSheetRowsStyled = ref<TimeRow[]>([])
+const isTimeSheetCreated = ref(false)
 const currentDate = ref(new Date())
-const monthTimeSheet = ref<TimeSheet | undefined>(undefined);
+const monthTimeSheet = ref<TimeSheet | undefined>(undefined)
 
-const user = useSupabaseUser();
+const user = useSupabaseUser()
 
-const edited = ref(false);
-const saveToast = useToast();
+const edited = ref(false)
+const chartPanelOpened = ref(false)
+const saveToast = useToast()
+
+const { clientList, fetchClients } = useTimeSheetDatabase()
 
 const getTimeSheet = async () => {
     const { data, error } = await supabase.from('timesheets').select('*').eq('userId', user.value?.id ?? '').eq('label', route.params.dateId)
@@ -172,6 +175,7 @@ const removeRow = (row: any, index: number) => {
 
 onMounted(async () => {
     await getTimeSheet()
+    await fetchClients()
     edited.value = false;
 })
 
@@ -187,14 +191,28 @@ const checkRow = (row: any) => {
     });
 };
 
+const goToAmpTicket = (ticketNumber: string) => {
+    window.open(`https://amp.service-now.com/nav_to.do?uri=/task_list.do?sysparm_query=sys_class_name=incident^ORsys_class_name=sc_req_item^number=${ticketNumber}^ORDERBYDESCsys_created_on&sysparm_first_row=1&sysparm_view=`, '_blank')
+}
+
+const createIncident = () => {
+    window.open(`https://amp.service-now.com/nav_to.do?uri=%2Fcom.glideapp.servicecatalog_cat_item_view.do%3Fv%3D1%26sysparm_id%3D01588fa88712999033bb21f8dabb35aa%26sysparm_link_parent%3Dc767627f87b99594c0e931573cbb35ef%26sysparm_catalog%3D58a300344f2dcb0069a027201310c7ff%26sysparm_catalog_view%3Dcatalog_cms_internal%26sysparm_view%3Dcatalogs_default`, '_blank')
+}
+
+const createFeature = () => {
+    window.open(`https://amp.service-now.com/nav_to.do?uri=%2Fcom.glideapp.servicecatalog_cat_item_view.do%3Fv%3D1%26sysparm_id%3D36683430c31ed9907bdb75d4e4013196%26sysparm_link_parent%3Dc767627f87b99594c0e931573cbb35ef%26sysparm_catalog%3D58a300344f2dcb0069a027201310c7ff%26sysparm_catalog_view%3Dcatalog_cms_internal%26sysparm_view%3D`, '_blank')
+}
+
+
+
 window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
 <template>
     <div>
-        <section class="flex flex-row">
+        <section class="flex flex-row gap-2">
             <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setPrevMonth"
-                class="mr-2" @nextMonth="setNextMonth"></MonthBanner>
+                @nextMonth="setNextMonth"></MonthBanner>
             <span v-if="!isTimeSheetCreated">
                 <UButton @click="createTimeSheet" icon="i-material-symbols-create-new-folder" />
             </span>
@@ -202,6 +220,9 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded" :disabled="!edited"
                     :color="edited ? 'primary' : 'gray'" />
             </span>
+            <UButton @click="createIncident">Create Incident</UButton>
+            <UButton @click="createFeature">Create Feature/Support</UButton>
+            <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
         </section>
         <section v-if="isTimeSheetCreated">
             <UTable :columns="columns" :rows="timeSheetRowsStyled" :ui="{ td: { padding: 'py-1 px-1' } }" v-auto-animate>
@@ -222,7 +243,8 @@ window.onbeforeunload = () => (edited.value ? true : null);
                     <span> {{ row.date }}</span>
                 </template>
                 <template #client-data="{ row }">
-                    <UInput v-model="row.client" v-if="row.type === 'work'"></UInput>
+                    <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"
+                        v-if="row.type === 'work'" />
                 </template>
                 <template #subject-data="{ row }">
                     <UInput v-model="row.subject" v-if="row.type === 'work'"></UInput>
@@ -242,7 +264,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                             @click="fillAmp(row, index, false)" variant="ghost" />
                         <UButton v-else icon="i-heroicons-check" color="green" @click="fillAmp(row, index, true)" />
                         <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" />
-                        <UButton icon="i-heroicons-arrow-right-circle" />
+                        <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp" @click="goToAmpTicket(row.amp)" />
                     </span>
                     <span v-else></span>
                 </template>
@@ -255,6 +277,15 @@ window.onbeforeunload = () => (edited.value ? true : null);
             <USkeleton class="h-12 mt-5 w-full" />
             <USkeleton class="h-8 my-3 w-full" v-for=" line  in  10 " />
         </section>
+        <USlideover v-model="chartPanelOpened">
+            <!-- Content -->
+            <UCard class="flex flex-col flex-1"
+                :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+                <template #header>
+                    Work repartition
+                </template>
+            </UCard>
+        </USlideover>
         <UNotifications />
     </div>
 </template>
