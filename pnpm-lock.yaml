@@ -11,6 +11,12 @@ dependencies:
   '@nuxt/ui':
     specifier: ^2.9.0
     version: 2.9.0(rollup@2.79.1)(vue@3.3.4)(webpack@5.89.0)
+  chart.js:
+    specifier: ^4.4.0
+    version: 4.4.0
+  vue-chartjs:
+    specifier: ^5.2.0
+    version: 5.2.0(chart.js@4.4.0)(vue@3.3.4)
 
 devDependencies:
   '@formkit/auto-animate':
@@ -1854,6 +1860,10 @@ packages:
       path-to-regexp: 6.2.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /@kurkle/color@0.3.2:
+    resolution: {integrity: sha512-fuscdXJ9G1qb7W8VdHi+IwRqij3lBkosAm4ydQtEmbY58OzHXqQhvlxqEkoz0yssNVn38bcpRWgA9PP+OGoisw==}
     dev: false
 
   /@kwsites/file-exists@1.1.1:
@@ -4105,6 +4115,13 @@ packages:
     resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
     dev: true
+
+  /chart.js@4.4.0:
+    resolution: {integrity: sha512-vQEj6d+z0dcsKLlQvbKIMYFHd3t8W/7L2vfJIbYcfyPcRx92CsHqECpueN8qVGNlKyDcr5wBrYAYKnfu/9Q1hQ==}
+    engines: {pnpm: '>=7'}
+    dependencies:
+      '@kurkle/color': 0.3.2
+    dev: false
 
   /chokidar@3.5.3:
     resolution: {integrity: sha512-Dr3sfKRP6oTcjf2JmUmFJfeVMvXBdegxB0iVQ5eb2V10uFJUCAS8OByZdVAyVb8xXNz3GjjTgj9kLWsZTqE6kw==}
@@ -9866,6 +9883,16 @@ packages:
     dependencies:
       ufo: 1.3.1
     dev: true
+
+  /vue-chartjs@5.2.0(chart.js@4.4.0)(vue@3.3.4):
+    resolution: {integrity: sha512-d3zpKmGZr2OWHQ1xmxBcAn5ShTG917+/UCLaSpaCDDqT0U7DBsvFzTs69ZnHCgKoXT55GZDW8YEj9Av+dlONLA==}
+    peerDependencies:
+      chart.js: ^4.1.1
+      vue: ^3.0.0-0 || ^2.7.0
+    dependencies:
+      chart.js: 4.4.0
+      vue: 3.3.4
+    dev: false
 
   /vue-demi@0.14.6(vue@3.3.4):
     resolution: {integrity: sha512-8QA7wrYSHKaYgUxDA5ZC24w+eHm3sYCbp0EzcDwKqN3p6HqtTCGR/GVsPyZW92unff4UlcSh++lmqDWN3ZIq4w==}

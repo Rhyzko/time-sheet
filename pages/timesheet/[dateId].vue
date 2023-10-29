@@ -202,9 +202,6 @@ const createIncident = () => {
 const createFeature = () => {
     window.open(`https://amp.service-now.com/nav_to.do?uri=%2Fcom.glideapp.servicecatalog_cat_item_view.do%3Fv%3D1%26sysparm_id%3D36683430c31ed9907bdb75d4e4013196%26sysparm_link_parent%3Dc767627f87b99594c0e931573cbb35ef%26sysparm_catalog%3D58a300344f2dcb0069a027201310c7ff%26sysparm_catalog_view%3Dcatalog_cms_internal%26sysparm_view%3D`, '_blank')
 }
-
-
-
 window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
@@ -247,7 +244,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         v-if="row.type === 'work'" />
                 </template>
                 <template #subject-data="{ row }">
-                    <UInput v-model="row.subject" v-if="row.type === 'work'"></UInput>
+                    <UInput v-model="row.subject" :ui="{ color: 'primary-100' }" v-if="row.type === 'work'"></UInput>
                     <span v-else></span>
                 </template>
                 <template #timeSpent-data="{ row }">
@@ -284,6 +281,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <template #header>
                     Work repartition
                 </template>
+                <DonutChart />
             </UCard>
         </USlideover>
         <UNotifications />

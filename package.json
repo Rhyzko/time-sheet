@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@iconify-json/material-symbols": "^1.1.60",
-    "@nuxt/ui": "^2.9.0"
+    "@nuxt/ui": "^2.9.0",
+    "chart.js": "^4.4.0",
+    "vue-chartjs": "^5.2.0"
   }
 }
