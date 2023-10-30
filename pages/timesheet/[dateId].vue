@@ -22,6 +22,8 @@ const user = useSupabaseUser()
 
 const edited = ref(false)
 const chartPanelOpened = ref(false)
+const ampPanelOpened = ref(false)
+
 const saveToast = useToast()
 
 const { clientList, fetchClients } = useTimeSheetDatabase()
@@ -189,6 +191,23 @@ const workRepartitionDataset = computed(() => {
         }
     })
 })
+
+const workByAmp = computed(() => {
+    return timeSheetRowsStyled.value.reduce((acc, row) => {
+        const amp: string = row.amp ?? 'No AMP';
+        if (!acc[amp]) {
+            acc[amp] = { amp, timeFilled: 0, timeToFill: 0, client: row.client ?? '' };
+        }
+        if (row.ampFilled) {
+            acc[amp].timeFilled += Number(row.timeSpent);
+        } else {
+            acc[amp].timeToFill += Number(row.timeSpent);
+        }
+
+        return acc;
+    }, {} as Record<string, { amp: string, timeFilled: number, timeToFill: number, client: string }>)
+})
+
 window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
@@ -210,6 +229,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 :icon="dayDisplayMode ? 'i-material-symbols-calendar-month-outline-rounded' : 'i-material-symbols-today-outline-rounded'">
             </UButton>
             <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
+            <UButton @click="ampPanelOpened = true" icon="i-material-symbols-edit-document-rounded"></UButton>
         </section>
         <section v-if="isTimeSheetCreated" class="w-full" v-auto-animate>
             <div class="flex flex-row items-center gap-2 py-1">
@@ -265,6 +285,18 @@ window.onbeforeunload = () => (edited.value ? true : null);
                     Work repartition
                 </template>
                 <DonutChart :dataset="workRepartitionDataset" />
+            </UCard>
+        </USlideover>
+        <USlideover v-model="ampPanelOpened">
+            <!-- Content -->
+            <UCard class="flex flex-col flex-1"
+                :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+                <template #header>
+                    AMP View
+                </template>
+                <div v-for="(ampTicket, key) in workByAmp" :key="key">
+                    {{ key }} {{ ampTicket.timeFilled }} {{ ampTicket.timeToFill }} {{ ampTicket.client }}
+                </div>
             </UCard>
         </USlideover>
         <UNotifications />
