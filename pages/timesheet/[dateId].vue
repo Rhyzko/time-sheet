@@ -26,6 +26,12 @@ const saveToast = useToast()
 
 const { clientList, fetchClients } = useTimeSheetDatabase()
 
+const dayDisplayMode = ref(false)
+
+const setDayDisplayMode = () => {
+    dayDisplayMode.value = !dayDisplayMode.value
+}
+
 const getTimeSheet = async () => {
     const { data, error } = await supabase.from('timesheets').select('*').eq('userId', user.value?.id ?? '').eq('label', route.params.dateId)
     if (error) {
@@ -126,36 +132,6 @@ const fillAmp = (row: any, index: number, fill: boolean) => {
     timeSheetRowsStyled.value.splice(index, 1, { ...row, ampFilled: fill })
 };
 
-let columns = [
-    {
-        key: 'actions'
-    },
-    {
-        key: 'date',
-        label: 'Date',
-    },
-    {
-        key: 'client',
-        label: 'Client'
-    },
-    {
-        key: 'subject',
-        label: 'Subject'
-    },
-    {
-        key: 'timeSpent',
-        label: 'Time'
-    },
-    {
-        key: 'amp',
-        label: 'AMP'
-    },
-    {
-        key: 'comment',
-        label: 'Comment'
-    }
-];
-
 const splitDay = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index + 1, 0, {
         date: row.date,
@@ -177,7 +153,6 @@ onMounted(async () => {
     await getTimeSheet()
     await fetchClients()
     edited.value = false;
-    console.log(workRepartitionDataset.value)
 })
 
 watch(timeSheetRowsStyled, () => {
@@ -231,6 +206,9 @@ window.onbeforeunload = () => (edited.value ? true : null);
             </span>
             <UButton @click="createIncident">Create Incident</UButton>
             <UButton @click="createFeature">Create Feature/Support</UButton>
+            <UButton @click="setDayDisplayMode"
+                :icon="dayDisplayMode ? 'i-material-symbols-calendar-month-outline-rounded' : 'i-material-symbols-today-outline-rounded'">
+            </UButton>
             <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
         </section>
         <section v-if="isTimeSheetCreated" class="w-full" v-auto-animate>
@@ -243,34 +221,36 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <span class="w-40 ml-10 font-semibold">AMP</span>
                 <span class="font-semibold">Comment</span>
             </div>
-            <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`"
-                class="flex flex-row gap-2 py-1 items-center" :class="row.class">
-                <section class="w-20">
-                    <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date" icon="i-heroicons-minus"
-                        @click="removeRow(row, index)" class="ml-10">
-                    </UButton>
-                    <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'">
-                    </UButton>
-                    <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
-                        v-if="row.type === 'work' && index > 0 && row.date !== timeSheetRowsStyled[index - 1].date"
-                        class="ml-2" />
-                    <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left" @click="setDayOn(row, index)"
-                        class="ml-10" />
-                </section>
-                <span class="w-10 text-sm"> {{ row.date }}</span>
-                <USelectMenu v-model="row.client" :options="clientList" value-attribute="label" v-if="row.type === 'work'"
-                    class="w-40" />
-                <UInput v-model="row.subject" v-if="row.type === 'work'" class="w-64"></UInput>
-                <UInput v-model="row.timeSpent" class="w-10" @blur="checkRow(row)" v-if="row.type === 'work'" />
-                <span v-if="row.type === 'work'" class="flex flex-row gap-2">
-                    <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
-                        @click="fillAmp(row, index, false)" variant="ghost" />
-                    <UButton v-else icon="i-heroicons-check" color="green" @click="fillAmp(row, index, true)" />
-                    <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
-                    <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp" @click="goToAmpTicket(row.amp)" />
-                    <span v-else class="w-8"></span>
-                </span>
-                <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
+            <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`">
+                <div class="flex flex-row gap-2 py-1 items-center" :class="row.class"
+                    v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
+                    <section class="w-20">
+                        <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date"
+                            icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-10">
+                        </UButton>
+                        <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'">
+                        </UButton>
+                        <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
+                            v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)"
+                            class="ml-2" />
+                        <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left" @click="setDayOn(row, index)"
+                            class="ml-10" />
+                    </section>
+                    <span class="w-10 text-sm"> {{ row.date }}</span>
+                    <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"
+                        v-if="row.type === 'work'" class="w-40" />
+                    <UInput v-model="row.subject" v-if="row.type === 'work'" class="w-64"></UInput>
+                    <UInput v-model="row.timeSpent" class="w-10" @blur="checkRow(row)" v-if="row.type === 'work'" />
+                    <span v-if="row.type === 'work'" class="flex flex-row gap-2">
+                        <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
+                            @click="fillAmp(row, index, false)" variant="ghost" />
+                        <UButton v-else icon="i-heroicons-check" color="green" @click="fillAmp(row, index, true)" />
+                        <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
+                        <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp" @click="goToAmpTicket(row.amp)" />
+                        <span v-else class="w-8"></span>
+                    </span>
+                    <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
+                </div>
             </div>
         </section>
         <section v-else>
@@ -290,5 +270,4 @@ window.onbeforeunload = () => (edited.value ? true : null);
         <UNotifications />
     </div>
 </template>
-
 <style lang="scss" scoped></style>
