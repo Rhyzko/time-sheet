@@ -1,4 +1,8 @@
 <script setup lang="ts">
+const props = defineProps({
+    dataset: Array
+})
+
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 
@@ -9,11 +13,14 @@ const chartOptions = {
     maintainAspectRatio: false,
 }
 
+const filteredData = props.dataset?.filter((d: any) => d.value > 0) ?? []
+
 const chartData = {
-    labels: ['SBM', 'VyV', 'March'],
-    datasets: [{ data: [40, 20, 12] }]
+    labels: filteredData.map((d: any) => d.label),
+    datasets: [{ data: filteredData.map((d: any) => d.value), backgroundColor: filteredData.map((d: any) => d.color) }]
 }
 </script>
+
 
 <template>
     <div>

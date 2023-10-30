@@ -12,7 +12,9 @@ declare interface TimeRow {
 
 declare interface Client {
     label: string,
-    id: number
+    id: number,
+    color: string | null,
+    tags: string | null
 }
 
 declare interface TimeSheet {

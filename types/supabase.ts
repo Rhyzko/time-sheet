@@ -11,16 +11,19 @@ export interface Database {
     Tables: {
       clients: {
         Row: {
+          color: string | null
           id: number
           label: string
           tags: string | null
         }
         Insert: {
+          color?: string | null
           id?: number
           label: string
           tags?: string | null
         }
         Update: {
+          color?: string | null
           id?: number
           label?: string
           tags?: string | null
