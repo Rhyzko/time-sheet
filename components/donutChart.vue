@@ -15,8 +15,11 @@ const chartOptions = {
 
 const filteredData = props.dataset?.filter((d: any) => d.value > 0) ?? []
 
+const totalValue = filteredData.reduce((acc: number, d: any) => acc + d.value, 0)
+const labelsWithPercentage = filteredData.map((d: any) => `${d.label} (${Math.round((d.value / totalValue) * 100)}%)`)
+
 const chartData = {
-    labels: filteredData.map((d: any) => d.label),
+    labels: labelsWithPercentage,
     datasets: [{ data: filteredData.map((d: any) => d.value), backgroundColor: filteredData.map((d: any) => d.color) }]
 }
 </script>
