@@ -24,41 +24,43 @@ export default defineNuxtConfig({
     "@nuxt/image"
   ],
   pwa: {
+    registerType: 'autoUpdate',
     manifest: {
-      name: "TimeSheet",
-      short_name: "TimeSheet",
-      start_url: ".",
+      name: "AvaTimeSheet",
+      short_name: "AvaTimeSheet",
       display: "standalone",
-      background_color: "#fff",
-      description: "A new way to save timesheet",
+      background_color: "#f97316",
+      theme_color: '#f97316',
+      description: "A new way to save your time",
+      lang: "en",
       icons: [
         {
-          "src": "images/touch/homescreen48.png",
+          "src": "img/logo-48-48.png",
           "sizes": "48x48",
           "type": "image/png"
         },
         {
-          "src": "images/touch/homescreen72.png",
+          "src": "img/logo-72-72.png",
           "sizes": "72x72",
           "type": "image/png"
         },
         {
-          "src": "images/touch/homescreen96.png",
+          "src": "img/logo-96-96.png",
           "sizes": "96x96",
           "type": "image/png"
         },
         {
-          "src": "images/touch/homescreen144.png",
+          "src": "img/logo-144-144.png",
           "sizes": "144x144",
           "type": "image/png"
         },
         {
-          "src": "images/touch/homescreen168.png",
-          "sizes": "168x168",
+          "src": "img/logo-512-512.png",
+          "sizes": "512x512",
           "type": "image/png"
         },
         {
-          "src": "images/touch/homescreen192.png",
+          "src": "img/logo-192-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
