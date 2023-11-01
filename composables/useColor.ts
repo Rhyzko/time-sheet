@@ -4,7 +4,7 @@ export default function useColor() {
         { label: "red", code: "#ef4444" },
         { label: "orange", code: "#f97316" },
         { label: "amber", code: "#f59e0b" },
-        { label: "yellow", code: "#d97706" },
+        { label: "yellow", code: "#fde047" },
         { label: "lime", code: "#84cc16" },
         { label: "green", code: "#22c55e" },
         { label: "emerald", code: "#10b981" },

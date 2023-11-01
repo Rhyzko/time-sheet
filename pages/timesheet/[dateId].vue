@@ -295,7 +295,19 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         </section>
                         <span class="w-10 text-sm"> {{ row.date }}</span>
                         <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"
-                            v-if="row.type === 'work'" class="w-40" />
+                            v-if="row.type === 'work'" class="w-40">
+                            <template #option="{ option }">
+                                <span class="w-4 h-4 rounded-sm" :style="{ background: `${option.color}` }">
+                                </span>
+                                <span>{{ option.label }}</span>
+                            </template>
+                            <template #label>
+                                <span v-if="row.client" class="w-4 h-4 rounded-sm"
+                                    :style="{ background: `${clientList.find(c => c.label === row.client)?.color}` }" />
+                                <span v-if="row.client">{{ row.client }}</span>
+                                <span v-else class="h-5"></span>
+                            </template>
+                        </USelectMenu>
                         <UInput v-model="row.subject" v-if="row.type === 'work'" class="w-64"></UInput>
                         <UInput v-model="row.timeSpent" class="w-10" @blur="checkRow(row)" v-if="row.type === 'work'" />
                         <span v-if="row.type === 'work'" class="flex flex-row gap-2">

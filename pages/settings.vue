@@ -20,10 +20,8 @@ const selectColor = async (color: string, clientId: number) => {
   <section class=" flex flex-wrap gap-3 pt-4 mx-4" v-auto-animate>
     <UCard v-for="client in clientList" :key="client.id" class="w-56 h-52"
       :ui="{ header: { background: client.color ? `bg-${getColorLabelFromCode(client.color)}-500` : '' } }">
-      <template #header :style="{ 'background-color': `${client.color || 'red'}` }">
-        <div class="flex flex-row items-center">
-          <span>{{ client.label }}</span>
-        </div>
+      <template #header>
+        <span>{{ client.label }}</span>
       </template>
       <section class="flex flex-row">
         <UButton icon="i-material-symbols-view-list-outline" @click="goToAmpTicketList(client.label)"></UButton>
