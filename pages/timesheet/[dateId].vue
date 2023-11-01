@@ -52,11 +52,19 @@ const getTimeSheet = async () => {
                     class: row.type === 'off' ? 'bg-red-100' : row.type === 'weekend' ? 'bg-gray-200' : 'py-0'
                 }
             })
-            timeSheetRowsStyled.value.filter(row => row.type === 'work'
-                && row.date && parseInt(row.date.substring(0, 2)) <= new Date().getDate()
-            ).forEach((row) => {
-                checkRow(row);
-            });
+            const selectedMonthAndYear = useDateFormat(currentDate.value, 'YYYY-MM').value;
+            const currentMonthAndYear = useDateFormat(new Date(), 'YYYY-MM').value;
+            if (selectedMonthAndYear < currentMonthAndYear) {
+                timeSheetRowsStyled.value.filter(row => row.type === 'work').forEach((row) => {
+                    checkRow(row);
+                });
+            } else {
+                timeSheetRowsStyled.value.filter(row => row.type === 'work'
+                    && row.date && parseInt(row.date.substring(0, 2)) <= new Date().getDate()
+                ).forEach((row) => {
+                    checkRow(row);
+                });
+            }
         }
     }
 };
@@ -194,52 +202,72 @@ const workRepartitionDataset = computed(() => {
 
 const workByAmp = computed(() => {
     return timeSheetRowsStyled.value.reduce((acc, row) => {
-        const amp: string = row.amp ?? 'No AMP';
+        const amp: string = row.amp ?? ''
         if (!acc[amp]) {
-            acc[amp] = { amp, timeFilled: 0, timeToFill: 0, client: row.client ?? '' };
+            acc[amp] = { amp, timeFilled: 0, timeToFill: 0, client: row.client ?? '' }
         }
         if (row.ampFilled) {
-            acc[amp].timeFilled += Number(row.timeSpent);
+            acc[amp].timeFilled += Number(row.timeSpent)
         } else {
-            acc[amp].timeToFill += Number(row.timeSpent);
+            acc[amp].timeToFill += Number(row.timeSpent)
         }
-
         return acc;
-    }, {} as Record<string, { amp: string, timeFilled: number, timeToFill: number, client: string }>)
+    }, {} as Record<string, { amp: string, client: string, timeFilled: number, timeToFill: number }>)
 })
 
+const workByAmpArray = computed(() => {
+    return Object.keys(workByAmp.value).sort().map((key) => ({
+        amp: key,
+        client: workByAmp.value[key].client,
+        filled: workByAmp.value[key].timeFilled.toFixed(1).replace(/\.?0+$/, ''),
+        toFill: workByAmp.value[key].timeToFill.toFixed(1).replace(/\.?0+$/, ''),
+        total: decimalToTime(workByAmp.value[key].timeFilled + workByAmp.value[key].timeToFill),
+    }))
+})
+
+function decimalToTime(decimalValue: number) {
+    const hours = Math.floor(decimalValue);
+    const minutes = Math.round((decimalValue - hours) * 60);
+    return `${hours.toString()}h ${minutes.toString()}m`;
+}
+
+const totalAmp = computed(() => {
+    return timeSheetRowsStyled.value.filter((row) => row.ampFilled).reduce((acc, row) => acc + Number(row.timeSpent), 0)
+})
+
+const totalTime = computed(() => {
+    return timeSheetRowsStyled.value.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0)
+})
+
+const goToAmpTicketList = (ticketList: string[]) => {
+    const formattedList = ticketList.filter(ticket => ticket).join('%252C')
+    window.open(`https://amp.service-now.com/now/nav/ui/classic/params/target/task_list.do%3Fsysparm_query%3Dsys_class_name%253Dincident%255EORsys_class_name%253Dsc_req_item%255EnumberIN${formattedList}%255EORDERBYnumber%26sysparm_first_row%3D1%26sysparm_view%3D`, '_blank')
+}
 window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
 <template>
     <div>
         <section class="flex flex-row gap-2 fixed z-10 w-full bg-white dark:bg-slate-800">
-            <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value"
-                         @prevMonth="setPrevMonth"
-                         @nextMonth="setNextMonth"></MonthBanner>
+            <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setPrevMonth"
+                @nextMonth="setNextMonth"></MonthBanner>
             <span v-if="!isTimeSheetCreated">
-                <UButton @click="createTimeSheet"
-                         icon="i-material-symbols-create-new-folder" />
+                <UButton @click="createTimeSheet" icon="i-material-symbols-create-new-folder" />
             </span>
             <span v-else>
-                <UButton @click="updateTimeSheet"
-                         icon="i-material-symbols-save-outline-rounded"
-                         :disabled="!edited"
-                         :color="edited ? 'primary' : 'gray'" />
+                <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded" :disabled="!edited"
+                    :color="edited ? 'primary' : 'gray'" />
             </span>
             <UButton @click="createIncident">Create Incident</UButton>
             <UButton @click="createFeature">Create Feature/Support</UButton>
             <UButton @click="setDayDisplayMode"
-                     :icon="dayDisplayMode ? 'i-material-symbols-calendar-month-outline-rounded' : 'i-material-symbols-today-outline-rounded'">
+                :icon="dayDisplayMode ? 'i-material-symbols-calendar-month-outline-rounded' : 'i-material-symbols-today-outline-rounded'">
             </UButton>
-            <UButton @click="chartPanelOpened = true"
-                     icon="i-material-symbols-insert-chart" />
-            <UButton @click="ampPanelOpened = true"
-                     icon="i-material-symbols-edit-document-rounded"></UButton>
+            <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
+            <UButton @click="ampPanelOpened = true" icon="i-material-symbols-edit-document-rounded"></UButton>
+
         </section>
-        <section v-if="isTimeSheetCreated"
-                 class="w-full"
-                 v-auto-animate>
+        <section v-if="isTimeSheetCreated" class="w-full" v-auto-animate>
             <div class="flex flex-row items-center gap-2 py-1 fixed z-10 mt-8 bg-white dark:bg-slate-800 w-full">
                 <span class="w-20 "></span>
                 <span class="w-12 font-semibold">Date</span>
@@ -250,96 +278,79 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <span class="font-semibold">Comment</span>
             </div>
             <div class="pt-16">
-                <div v-for="(row, index) in timeSheetRowsStyled"
-                     :key="`${row.date}-${index}`">
-                    <div class="flex flex-row gap-2 py-1 items-center"
-                         :class="row.class"
-                         v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true"
-                         v-auto-animate>
+                <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`">
+                    <div class="flex flex-row gap-2 py-1 items-center" :class="row.class"
+                        v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
                         <section class="w-20">
                             <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date"
-                                     icon="i-heroicons-minus"
-                                     @click="removeRow(row, index)"
-                                     class="ml-10">
+                                icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-10">
                             </UButton>
-                            <UButton icon="i-heroicons-plus"
-                                     @click="splitDay(row, index)"
-                                     v-else-if="row.type === 'work'">
+                            <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'">
                             </UButton>
-                            <UButton icon="i-material-symbols-beach-access-outline-rounded"
-                                     @click="setDayOff(row, index)"
-                                     v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)"
-                                     class="ml-2" />
-                            <UButton v-if="row.type === 'off'"
-                                     icon="i-heroicons-arrow-uturn-left"
-                                     @click="setDayOn(row, index)"
-                                     class="ml-10" />
+                            <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
+                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)"
+                                class="ml-2" />
+                            <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left"
+                                @click="setDayOn(row, index)" class="ml-10" />
                         </section>
                         <span class="w-10 text-sm"> {{ row.date }}</span>
-                        <USelectMenu v-model="row.client"
-                                     :options="clientList"
-                                     value-attribute="label"
-                                     v-if="row.type === 'work'"
-                                     class="w-40" />
-                        <UInput v-model="row.subject"
-                                v-if="row.type === 'work'"
-                                class="w-64"></UInput>
-                        <UInput v-model="row.timeSpent"
-                                class="w-10"
-                                @blur="checkRow(row)"
-                                v-if="row.type === 'work'" />
-                        <span v-if="row.type === 'work'"
-                              class="flex flex-row gap-2">
-                            <UButton v-if="row.ampFilled"
-                                     icon="i-heroicons-arrow-uturn-left"
-                                     color="red"
-                                     @click="fillAmp(row, index, false)"
-                                     variant="ghost" />
-                            <UButton v-else
-                                     icon="i-heroicons-check"
-                                     color="green"
-                                     @click="fillAmp(row, index, true)" />
-                            <UInput v-model="row.amp"
-                                    :color="row.ampFilled ? 'green' : 'white'"
-                                    class="w-28" />
-                            <UButton icon="i-heroicons-arrow-right-circle"
-                                     v-if="row.amp"
-                                     @click="goToAmpTicket(row.amp)" />
-                            <span v-else
-                                  class="w-8"></span>
+                        <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"
+                            v-if="row.type === 'work'" class="w-40" />
+                        <UInput v-model="row.subject" v-if="row.type === 'work'" class="w-64"></UInput>
+                        <UInput v-model="row.timeSpent" class="w-10" @blur="checkRow(row)" v-if="row.type === 'work'" />
+                        <span v-if="row.type === 'work'" class="flex flex-row gap-2">
+                            <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
+                                @click="fillAmp(row, index, false)" variant="ghost" />
+                            <UButton v-else-if="row.amp" icon="i-heroicons-check" color="green"
+                                @click="fillAmp(row, index, true)" />
+                            <span v-else class="w-8"></span>
+                            <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
+                            <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp" @click="goToAmpTicket(row.amp)" />
+                            <span v-else class="w-8"></span>
                         </span>
-                        <UInput v-model="row.comment"
-                                v-if="row.type === 'work'"></UInput>
+                        <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
                     </div>
                 </div>
             </div>
         </section>
         <section v-else>
             <USkeleton class="h-12 mt-5 w-full" />
-            <USkeleton class="h-8 my-3 w-full"
-                       v-for=" line  in  10 " />
+            <USkeleton class="h-8 my-3 w-full" v-for=" line  in  10 " />
         </section>
         <USlideover v-model="chartPanelOpened">
-            <!-- Content -->
             <UCard class="flex flex-col flex-1"
-                   :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+                :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
                 <template #header>
                     Work repartition
                 </template>
                 <DonutChart :dataset="workRepartitionDataset" />
             </UCard>
         </USlideover>
-        <USlideover v-model="ampPanelOpened">
-            <!-- Content -->
-            <UCard class="flex flex-col flex-1"
-                   :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+        <USlideover v-model="ampPanelOpened" :ui="{ width: 'w-screen max-w-[50%]' }" side="left">
+            <UCard class="flex flex-col" :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
                 <template #header>
                     AMP View
                 </template>
-                <div v-for="(ampTicket, key) in workByAmp"
-                     :key="key">
-                    {{ key }} {{ ampTicket.timeFilled }} {{ ampTicket.timeToFill }} {{ ampTicket.client }}
-                </div>
+                <UCard :ui="{ ring: 'ring-1 ring-primary dark:ring-gray-800' }">
+                    <section class="flex flex-row items-center place-content-between">
+                        <div class="flex flex-col text-sm text-primary">
+                            <p>Chargeable time {{ totalAmp.toFixed(1) }}</p>
+                            <p>Chargeability
+                                <span class="text-sm font-medium">{{ ((totalAmp ?? 0) / (totalTime ?? 1) * 100).toFixed(1)
+                                }}</span>
+                                %
+                            </p>
+                        </div>
+                        <div>
+                            <UButton
+                                @click="goToAmpTicketList(workByAmpArray.filter(row => row.toFill !== '0').map(row => row.amp))"
+                                icon="i-material-symbols-filter-list-rounded" />
+                            <UButton @click="goToAmpTicketList(workByAmpArray.map(row => row.amp))" class="ml-2"
+                                icon="i-material-symbols-list-alt-outline-rounded" />
+                        </div>
+                    </section>
+                </UCard>
+                <UTable :rows="workByAmpArray" />
             </UCard>
         </USlideover>
         <UNotifications />
