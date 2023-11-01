@@ -248,7 +248,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
 
 <template>
     <div>
-        <section class="flex flex-row gap-2 fixed z-10 w-full bg-white dark:bg-slate-800">
+        <section class="flex flex-row gap-2 fixed z-10 w-full ml-2 bg-white dark:bg-slate-800">
             <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setPrevMonth"
                 @nextMonth="setNextMonth"></MonthBanner>
             <span v-if="!isTimeSheetCreated">
@@ -283,15 +283,16 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
                         <section class="w-20">
                             <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date"
-                                icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-10">
+                                icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-12">
                             </UButton>
-                            <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'">
+                            <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'"
+                                class="ml-2">
                             </UButton>
                             <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
                                 v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)"
                                 class="ml-2" />
                             <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left"
-                                @click="setDayOn(row, index)" class="ml-10" />
+                                @click="setDayOn(row, index)" class="ml-12" />
                         </section>
                         <span class="w-10 text-sm"> {{ row.date }}</span>
                         <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"

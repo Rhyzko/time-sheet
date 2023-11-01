@@ -10,23 +10,16 @@ const logout = async () => {
 
 <template>
     <header class="appbar flex flex-row items-center z-20 bg-white dark:bg-slate-800">
-        <img src="/img/logo.png"
-             width="50"
-             class="ml-4"
-             @click="router.push('/')"
-             :class="'cursor-pointer'">
+        <img src="/img/logo.png" width="50" class="ml-4" @click="router.push('/')" :class="'cursor-pointer'">
         <NuxtLink to="/">
             <h2 class="font-bold text-xl text-orange-500 ml-2">Avatime-sheet</h2>
         </NuxtLink>
-        <NuxtLink to="/settings"
-                  class="ml-auto">
-            <UButton icon="i-heroicons-cog-6-tooth"
-                     class="ml-auto" />
+        <NuxtLink to="/settings" class="ml-auto">
+            <UButton icon="i-heroicons-cog-6-tooth" class="ml-auto" />
         </NuxtLink>
         <ColorModeButton />
-        <span class="cursor-pointer ml-2">
-            <UButton icon="i-material-symbols-exit-to-app-rounded"
-                     @click="logout" />
+        <span class="cursor-pointer ml-2 mr-2">
+            <UButton icon="i-material-symbols-exit-to-app-rounded" @click="logout" />
         </span>
     </header>
     <main class="mainContent">
