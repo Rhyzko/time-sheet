@@ -323,6 +323,9 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         </span>
                         <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
                     </div>
+                    <UDivider :ui="{ border: { base: 'flex border-gray-400 dark:border-gray-800' } }"
+                        v-if="row.type === 'work' && index < (timeSheetRowsStyled.length - 1) && row.date !== timeSheetRowsStyled[index + 1].date && timeSheetRowsStyled[index + 1].type !== 'weekend'">
+                    </UDivider>
                 </div>
             </div>
         </section>
