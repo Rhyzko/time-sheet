@@ -272,7 +272,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
 
 <template>
     <div>
-        <section class="flex flex-row gap-2 fixed z-10 w-full ml-2 bg-white dark:bg-slate-800">
+        <section class="flex flex-row gap-2 fixed z-10 w-full pl-2 bg-white dark:bg-slate-800">
             <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setPrevMonth"
                 @nextMonth="setNextMonth"></MonthBanner>
             <span v-if="!isTimeSheetCreated">
@@ -292,7 +292,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
         </section>
         <section v-if="isTimeSheetCreated" v-auto-animate>
             <div
-                class="flex flex-row items-center align-middle gap-2 py-1 fixed z-10 mt-9 bg-white dark:bg-slate-800 w-full">
+                class="flex flex-row items-center align-middle gap-2 py-1 fixed z-10 mt-8 bg-white dark:bg-slate-800 w-full">
                 <span class="w-20"></span>
                 <span class="w-20 font-semibold pl-4">Date</span>
                 <span class="w-44 font-semibold">Client</span>
@@ -302,7 +302,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <span class="font-semibold">Comment</span>
                 <span class="w-8"></span>
             </div>
-            <div class="pt-[72px]">
+            <div class="pt-[68px]">
                 <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`">
                     <div class="flex flex-row gap-2 py-1 items-center" :class="row.class"
                         v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
@@ -350,26 +350,29 @@ window.onbeforeunload = () => (edited.value ? true : null);
                             <span v-else class="w-8"></span>
                         </span>
                         <UInput v-model="row.comment" v-if="row.type === 'work'" :ui="{ base: 'w-64' }"></UInput>
-                        <UButton icon="i-material-symbols-content-copy-outline-rounded" @click="copyRow(row)" />
-                        <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
-                            class="disabled:text-gray-500" @click="pasteRow(row, index)" />
-                        <UPopover
-                            v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)">
-                            <UButton icon="i-material-symbols-more-vert" />
-                            <template #panel>
-                                <section class="p-2 flex flex-col gap-2">
-                                    <UButton icon="i-mdi-fraction-one-half" @click="setHalfDayOff(row)"
-                                        class="disabled:text-gray-500" :disabled="row.halfDay">Half day work
-                                    </UButton>
-                                    <UButton icon="i-material-symbols-cleaning-services-rounded"
-                                        @click="resetRow(row, index)">Clear the day</UButton>
-                                    <UButton icon="i-material-symbols-content-copy-outline-rounded" @click="copyRow(row)">
-                                        Copy row</UButton>
-                                    <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
-                                        class="disabled:text-gray-500" @click="pasteRow(row, index)">Paste row</UButton>
-                                </section>
-                            </template>
-                        </UPopover>
+                        <section class="flex flex-row gap-2" v-if="row.type === 'work'">
+                            <UButton icon="i-material-symbols-content-copy-outline-rounded" @click="copyRow(row)" />
+                            <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
+                                class="disabled:text-gray-500" @click="pasteRow(row, index)" />
+                            <UPopover
+                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)">
+                                <UButton icon="i-material-symbols-more-vert" />
+                                <template #panel>
+                                    <section class="p-2 flex flex-col gap-2">
+                                        <UButton icon="i-mdi-fraction-one-half" @click="setHalfDayOff(row)"
+                                            class="disabled:text-gray-500" :disabled="row.halfDay">Half day work
+                                        </UButton>
+                                        <UButton icon="i-material-symbols-cleaning-services-rounded"
+                                            @click="resetRow(row, index)">Clear the day</UButton>
+                                        <UButton icon="i-material-symbols-content-copy-outline-rounded"
+                                            @click="copyRow(row)">
+                                            Copy row</UButton>
+                                        <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
+                                            class="disabled:text-gray-500" @click="pasteRow(row, index)">Paste row</UButton>
+                                    </section>
+                                </template>
+                            </UPopover>
+                        </section>
                     </div>
                     <UDivider :ui="{ border: { base: 'flex border-gray-400 dark:border-gray-800' } }"
                         v-if="!dayDisplayMode && row.type === 'work' && index < (timeSheetRowsStyled.length - 1) && row.date !== timeSheetRowsStyled[index + 1].date && timeSheetRowsStyled[index + 1].type !== 'weekend'">
