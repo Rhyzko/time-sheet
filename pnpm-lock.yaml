@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  '@iconify-json/material-symbols':
-    specifier: ^1.1.61
-    version: 1.1.61
   '@nuxt/ui':
     specifier: ^2.10.0
     version: 2.10.0(rollup@2.79.1)(vue@3.3.7)(webpack@5.89.0)
@@ -22,6 +19,12 @@ devDependencies:
   '@formkit/auto-animate':
     specifier: ^0.8.0
     version: 0.8.0
+  '@iconify-json/material-symbols':
+    specifier: ^1.1.61
+    version: 1.1.61
+  '@iconify-json/mdi':
+    specifier: ^1.1.55
+    version: 1.1.55
   '@nuxt/devtools':
     specifier: latest
     version: 1.0.0(nuxt@3.8.0)(rollup@2.79.1)(vite@4.5.0)
@@ -1774,7 +1777,13 @@ packages:
     resolution: {integrity: sha512-NbLHV5VF5MZsfydXvr4M/jCODjBHzOg3ctLMQ39yOtY7+VZgVkBuJiMlp3zKWcWPHIt1J3t0CLwVLZ9szyL8BA==}
     dependencies:
       '@iconify/types': 2.0.0
-    dev: false
+    dev: true
+
+  /@iconify-json/mdi@1.1.55:
+    resolution: {integrity: sha512-ycnFub+EQx+3D/aDCg6iC7sjexOUa5GzxUNIZFFl0Pq7aDxbmhIludoyYnguEO3REyWf9FcOOmvVcQkdtwKHTw==}
+    dependencies:
+      '@iconify/types': 2.0.0
+    dev: true
 
   /@iconify/types@2.0.0:
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}

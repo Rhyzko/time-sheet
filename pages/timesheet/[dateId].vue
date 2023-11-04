@@ -29,6 +29,7 @@ const saveToast = useToast()
 const { clientList, fetchClients } = useTimeSheetDatabase()
 
 const dayDisplayMode = ref(false)
+const copiedRow = ref<TimeRow | undefined>(undefined)
 
 const setDayDisplayMode = () => {
     dayDisplayMode.value = !dayDisplayMode.value
@@ -105,15 +106,14 @@ const getDayType = (date: Date) => {
 };
 
 const formatMonthTable = (month: number) => {
-    const numDaysInMonth = new Date(2023, month, 0).getDate();
+    const numDaysInMonth = new Date(new Date().getFullYear(), month, 0).getDate();
     timeSheetRowsStyled.value = [];
     for (let i = 1; i <= numDaysInMonth; i++) {
-        const date = new Date(2023, month - 1, i);
+        const date = new Date(new Date().getFullYear(), month - 1, i);
         timeSheetRowsStyled.value.push({
-            date: useDateFormat(date, 'DD-MM').value,
+            date: useDateFormat(date, 'ddd DD-MM').value,
             client: '',
             subject: '',
-            timeSpent: 0,
             comment: '',
             type: getDayType(date)
         });
@@ -131,7 +131,15 @@ const setPrevMonth = async () => {
 };
 
 const setDayOff = (row: any, index: number) => {
-    timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, type: 'off', class: 'bg-red-100' })
+    timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, amp: '', ampFilled: false, client: '', comment: '', subject: '', timeSpent: '', type: 'off', class: 'bg-red-100' })
+};
+
+const setHalfDayOff = (row: any) => {
+    const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date)
+    impactedRows.forEach((r) => {
+        r.halfDay = true
+    });
+    checkRow(row);
 };
 
 const setDayOn = (row: any, index: number) => {
@@ -143,19 +151,29 @@ const fillAmp = (row: any, index: number, fill: boolean) => {
 };
 
 const splitDay = (row: any, index: number) => {
-    timeSheetRowsStyled.value.splice(index + 1, 0, {
+    const insertIndex = timeSheetRowsStyled.value.filter(r => r.date === row.date).length - 1 + index;
+    timeSheetRowsStyled.value.splice(insertIndex + 1, 0, {
         date: row.date,
         client: '',
         subject: '',
-        timeSpent: 0,
         comment: '',
         class: row.class,
-        type: row.type
+        type: row.type,
+        halfDay: row.halfDay,
     });
 };
 
 const removeRow = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index, 1);
+    checkRow(row);
+};
+
+const copyRow = (row: any) => {
+    copiedRow.value = { ...row, class: '', timeSpent: null, ampFilled: false };
+};
+
+const pasteRow = (row: any, index: number) => {
+    timeSheetRowsStyled.value.splice(index, 1, { ...copiedRow.value, date: row.date });
     checkRow(row);
 };
 
@@ -170,11 +188,17 @@ watch(timeSheetRowsStyled, () => {
 }, { deep: true })
 
 const checkRow = (row: any) => {
+    const totalValues = row.halfDay ? [3.8, 3.9] : [7.7];
     const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date);
     const total = impactedRows.reduce((acc, r) => acc + Number(r.timeSpent), 0);
     impactedRows.forEach((r) => {
-        r.class = total === 7.7 ? 'bg-green-100' : 'bg-orange-100';
+        r.class = totalValues.includes(total) ? 'bg-green-100' : 'bg-orange-100';
     });
+};
+
+const resetRow = (row: any, index: number) => {
+    timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, amp: '', ampFilled: false, client: '', comment: '', subject: '', timeSpent: '', halfDay: false })
+    checkRow(row);
 };
 
 const goToAmpTicket = (ticketNumber: string) => {
@@ -265,23 +289,24 @@ window.onbeforeunload = () => (edited.value ? true : null);
             </UButton>
             <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
             <UButton @click="ampPanelOpened = true" icon="i-material-symbols-edit-document-rounded"></UButton>
-
         </section>
-        <section v-if="isTimeSheetCreated" class="w-full" v-auto-animate>
-            <div class="flex flex-row items-center gap-2 py-1 fixed z-10 mt-8 bg-white dark:bg-slate-800 w-full">
-                <span class="w-20 "></span>
-                <span class="w-12 font-semibold">Date</span>
-                <span class="w-40 font-semibold">Client</span>
+        <section v-if="isTimeSheetCreated" v-auto-animate>
+            <div
+                class="flex flex-row items-center align-middle gap-2 py-1 fixed z-10 mt-9 bg-white dark:bg-slate-800 w-full">
+                <span class="w-20"></span>
+                <span class="w-20 font-semibold pl-4">Date</span>
+                <span class="w-44 font-semibold">Client</span>
                 <span class="w-64 font-semibold">Subject</span>
                 <span class="w-10 font-semibold">Time</span>
                 <span class="w-40 ml-10 font-semibold">AMP</span>
                 <span class="font-semibold">Comment</span>
+                <span class="w-8"></span>
             </div>
-            <div class="pt-16">
+            <div class="pt-[72px]">
                 <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`">
                     <div class="flex flex-row gap-2 py-1 items-center" :class="row.class"
                         v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
-                        <section class="w-20">
+                        <section class="flex flex-row w-20 shrink-0 align-middle">
                             <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date"
                                 icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-12">
                             </UButton>
@@ -289,14 +314,15 @@ window.onbeforeunload = () => (edited.value ? true : null);
                                 class="ml-2">
                             </UButton>
                             <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
-                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)"
+                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date) && !row.halfDay"
                                 class="ml-2" />
+                            <Icon v-if="row.halfDay" name="mdi:fraction-one-half" class="ml-4" />
                             <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left"
                                 @click="setDayOn(row, index)" class="ml-12" />
                         </section>
-                        <span class="w-10 text-sm"> {{ row.date }}</span>
+                        <span class="w-20 text-sm text-right shrink-0"> {{ row.date }}</span>
                         <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"
-                            v-if="row.type === 'work'" class="w-40">
+                            v-if="row.type === 'work'" :ui="{ base: 'w-44' }">
                             <template #option="{ option }">
                                 <span class="w-4 h-4 rounded-sm" :style="{ background: `${option.color}` }">
                                 </span>
@@ -309,8 +335,10 @@ window.onbeforeunload = () => (edited.value ? true : null);
                                 <span v-else class="h-5"></span>
                             </template>
                         </USelectMenu>
-                        <UInput v-model="row.subject" v-if="row.type === 'work'" class="w-64"></UInput>
-                        <UInput v-model="row.timeSpent" class="w-10" @blur="checkRow(row)" v-if="row.type === 'work'" />
+                        <UInput v-model="row.subject" v-if="row.type === 'work'" :ui="{ base: 'w-64' }">
+                        </UInput>
+                        <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @blur="checkRow(row)" type="number"
+                            v-if="row.type === 'work'" />
                         <span v-if="row.type === 'work'" class="flex flex-row gap-2">
                             <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
                                 @click="fillAmp(row, index, false)" variant="ghost" />
@@ -321,10 +349,30 @@ window.onbeforeunload = () => (edited.value ? true : null);
                             <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp" @click="goToAmpTicket(row.amp)" />
                             <span v-else class="w-8"></span>
                         </span>
-                        <UInput v-model="row.comment" v-if="row.type === 'work'"></UInput>
+                        <UInput v-model="row.comment" v-if="row.type === 'work'" :ui="{ base: 'w-64' }"></UInput>
+                        <UButton icon="i-material-symbols-content-copy-outline-rounded" @click="copyRow(row)" />
+                        <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
+                            class="disabled:text-gray-500" @click="pasteRow(row, index)" />
+                        <UPopover
+                            v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)">
+                            <UButton icon="i-material-symbols-more-vert" />
+                            <template #panel>
+                                <section class="p-2 flex flex-col gap-2">
+                                    <UButton icon="i-mdi-fraction-one-half" @click="setHalfDayOff(row)"
+                                        class="disabled:text-gray-500" :disabled="row.halfDay">Half day work
+                                    </UButton>
+                                    <UButton icon="i-material-symbols-cleaning-services-rounded"
+                                        @click="resetRow(row, index)">Clear the day</UButton>
+                                    <UButton icon="i-material-symbols-content-copy-outline-rounded" @click="copyRow(row)">
+                                        Copy row</UButton>
+                                    <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
+                                        class="disabled:text-gray-500" @click="pasteRow(row, index)">Paste row</UButton>
+                                </section>
+                            </template>
+                        </UPopover>
                     </div>
                     <UDivider :ui="{ border: { base: 'flex border-gray-400 dark:border-gray-800' } }"
-                        v-if="row.type === 'work' && index < (timeSheetRowsStyled.length - 1) && row.date !== timeSheetRowsStyled[index + 1].date && timeSheetRowsStyled[index + 1].type !== 'weekend'">
+                        v-if="!dayDisplayMode && row.type === 'work' && index < (timeSheetRowsStyled.length - 1) && row.date !== timeSheetRowsStyled[index + 1].date && timeSheetRowsStyled[index + 1].type !== 'weekend'">
                     </UDivider>
                 </div>
             </div>

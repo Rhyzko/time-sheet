@@ -1,8 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   app: {
+    head:{
+      title: 'AvaTimeSheet',
+    },
       pageTransition: { name: 'page', mode: 'out-in' },
   },
+  css: ['~/assets/css/main.scss'],
   devtools: {
     enabled: true,
 
@@ -12,7 +16,7 @@ export default defineNuxtConfig({
   },
   ssr: false,
   ui: {
-    icons: ['heroicons', 'material-symbols']
+    icons: ['heroicons', 'material-symbols', 'mdi']
   },
   modules: [
     '@vite-pwa/nuxt',

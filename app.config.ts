@@ -4,8 +4,12 @@ export default defineAppConfig({
       gray: 'cool',
       button: {
         default: {
-          variant: 'outline'
-        }
-      }
+          variant: 'outline',
+        },
+      },
+    },
+    nuxtIcon: {
+      size: '20px',
+      class: 'text-primary m-[6px]'
     }
   })

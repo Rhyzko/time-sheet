@@ -8,6 +8,7 @@ declare interface TimeRow {
     ampFilled?: boolean;
     type?: 'work' | 'weekend' | 'off'
     class?: string
+    halfDay?: boolean
   }
 
 declare interface Client {
