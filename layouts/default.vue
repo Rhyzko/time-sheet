@@ -22,7 +22,7 @@ const logout = async () => {
             <UButton icon="i-material-symbols-exit-to-app-rounded" @click="logout" />
         </span>
     </header>
-    <main class="mainContent">
+    <main class="mainContent dark:bg-slate-800">
         <slot />
     </main>
 </template>

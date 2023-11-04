@@ -50,7 +50,7 @@ const getTimeSheet = async () => {
             timeSheetRowsStyled.value = timeSheetRows.value.map((row) => {
                 return {
                     ...row,
-                    class: row.type === 'off' ? 'bg-red-100' : row.type === 'weekend' ? 'bg-gray-200' : 'py-0'
+                    class: row.type === 'off' ? 'bg-red-100 dark:bg-red-900' : row.type === 'weekend' ? 'bg-gray-200 dark:bg-slate-600' : 'py-0'
                 }
             })
             const selectedMonthAndYear = useDateFormat(currentDate.value, 'YYYY-MM').value;
@@ -131,7 +131,7 @@ const setPrevMonth = async () => {
 };
 
 const setDayOff = (row: any, index: number) => {
-    timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, amp: '', ampFilled: false, client: '', comment: '', subject: '', timeSpent: '', type: 'off', class: 'bg-red-100' })
+    timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, amp: '', ampFilled: false, client: '', comment: '', subject: '', timeSpent: '', type: 'off', class: 'bg-red-100 dark:bg-red-900' })
 };
 
 const setHalfDayOff = (row: any) => {
@@ -143,7 +143,8 @@ const setHalfDayOff = (row: any) => {
 };
 
 const setDayOn = (row: any, index: number) => {
-    timeSheetRowsStyled.value.splice(index, 1, { ...row, type: 'work', class: 'bg-orange-100' })
+    timeSheetRowsStyled.value.splice(index, 1, { ...row, type: 'work' })
+    checkRow(row)
 };
 
 const fillAmp = (row: any, index: number, fill: boolean) => {
@@ -192,7 +193,7 @@ const checkRow = (row: any) => {
     const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date);
     const total = impactedRows.reduce((acc, r) => acc + Number(r.timeSpent), 0);
     impactedRows.forEach((r) => {
-        r.class = totalValues.includes(total) ? 'bg-green-100' : 'bg-orange-100';
+        r.class = totalValues.includes(total) ? 'bg-green-100 dark:bg-green-900' : 'bg-orange-100 dark:bg-orange-900';
     });
 };
 
@@ -271,8 +272,8 @@ window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
 <template>
-    <div>
-        <section class="flex flex-row gap-2 fixed z-10 w-full pl-2 bg-white dark:bg-slate-800">
+    <div class="w-max dark:bg-slate-800">
+        <section class="flex flex-row gap-2 pl-2 py-1 w-full fixed mt-0 z-10 bg-white dark:bg-slate-800">
             <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setPrevMonth"
                 @nextMonth="setNextMonth"></MonthBanner>
             <span v-if="!isTimeSheetCreated">
@@ -282,17 +283,22 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded" :disabled="!edited"
                     :color="edited ? 'primary' : 'gray'" />
             </span>
+            <UTooltip :text="dayDisplayMode ? 'View all' : 'View today'">
+                <UButton @click="setDayDisplayMode"
+                    :icon="dayDisplayMode ? 'i-material-symbols-calendar-month-outline-rounded' : 'i-material-symbols-today-outline-rounded'">
+                </UButton>
+            </UTooltip>
+            <UTooltip text="Display work repartition">
+                <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
+            </UTooltip>
+            <UTooltip text="Display AMP view">
+                <UButton @click="ampPanelOpened = true" icon="i-material-symbols-edit-document-rounded"></UButton>
+            </UTooltip>
             <UButton @click="createIncident">Create Incident</UButton>
             <UButton @click="createFeature">Create Feature/Support</UButton>
-            <UButton @click="setDayDisplayMode"
-                :icon="dayDisplayMode ? 'i-material-symbols-calendar-month-outline-rounded' : 'i-material-symbols-today-outline-rounded'">
-            </UButton>
-            <UButton @click="chartPanelOpened = true" icon="i-material-symbols-insert-chart" />
-            <UButton @click="ampPanelOpened = true" icon="i-material-symbols-edit-document-rounded"></UButton>
         </section>
-        <section v-if="isTimeSheetCreated" v-auto-animate>
-            <div
-                class="flex flex-row items-center align-middle gap-2 py-1 fixed z-10 mt-8 bg-white dark:bg-slate-800 w-full">
+        <section v-if="isTimeSheetCreated" v-auto-animate class="top-10">
+            <div class="flex flex-row items-center align-middle gap-2 py-1 bg-white dark:bg-slate-800 w-full">
                 <span class="w-20"></span>
                 <span class="w-20 font-semibold pl-4">Date</span>
                 <span class="w-44 font-semibold">Client</span>
@@ -302,7 +308,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <span class="font-semibold">Comment</span>
                 <span class="w-8"></span>
             </div>
-            <div class="pt-[68px]">
+            <div>
                 <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`">
                     <div class="flex flex-row gap-2 py-1 items-center" :class="row.class"
                         v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
@@ -346,7 +352,10 @@ window.onbeforeunload = () => (edited.value ? true : null);
                                 @click="fillAmp(row, index, true)" />
                             <span v-else class="w-8"></span>
                             <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
-                            <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp" @click="goToAmpTicket(row.amp)" />
+                            <UTooltip text="Go to AMP ticket" v-if="row.amp">
+                                <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp"
+                                    @click="goToAmpTicket(row.amp)" />
+                            </UTooltip>
                             <span v-else class="w-8"></span>
                         </span>
                         <UInput v-model="row.comment" v-if="row.type === 'work'" :ui="{ base: 'w-64' }"></UInput>
@@ -355,7 +364,8 @@ window.onbeforeunload = () => (edited.value ? true : null);
                             <UButton icon="i-material-symbols-content-paste-go-rounded" :disabled="!copiedRow"
                                 class="disabled:text-gray-500" @click="pasteRow(row, index)" />
                             <UPopover
-                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)">
+                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date)"
+                                class="pr-2">
                                 <UButton icon="i-material-symbols-more-vert" />
                                 <template #panel>
                                     <section class="p-2 flex flex-col gap-2">
@@ -420,7 +430,6 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <UTable :rows="workByAmpArray" />
             </UCard>
         </USlideover>
-        <UNotifications />
     </div>
 </template>
 <style lang="scss" scoped></style>

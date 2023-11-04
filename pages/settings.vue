@@ -24,8 +24,9 @@ const selectColor = async (color: string, clientId: number) => {
         <span>{{ client.label }}</span>
       </template>
       <section class="flex flex-row">
-        <UButton icon="i-material-symbols-view-list-outline" @click="goToAmpTicketList(client.label)"></UButton>
-        Tags
+        <UTooltip text="Go to AMP tickets">
+          <UButton icon="i-material-symbols-view-list-outline" @click="goToAmpTicketList(client.label)"></UButton>
+        </UTooltip>
         <Color-Picker class="ml-auto" @selected="(color) => selectColor(color.code, client.id)"></Color-Picker>
         <UButton icon="i-heroicons-trash" class="ml-2" @click=" deleteClient(client.id)"></UButton>
       </section>
