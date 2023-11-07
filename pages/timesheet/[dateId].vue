@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Database } from '~/types/supabase';
 definePageMeta({
     validate: async (currentRoute) => {
         if (typeof currentRoute.params.dateId !== 'string') {
@@ -11,14 +10,11 @@ definePageMeta({
 })
 
 const route = useRoute()
-const supabase = useSupabaseClient<Database>()
-const timeSheetRows = ref<TimeRow[]>([])
-const timeSheetRowsStyled = ref<TimeRow[]>([])
-const isTimeSheetCreated = ref(false)
-const currentDate = ref(new Date())
-const monthTimeSheet = ref<TimeSheet | undefined>(undefined)
+const store = useTimesheetStore()
 
-const user = useSupabaseUser()
+const { timeSheetRowsStyled, isTimeSheetCreated, currentDate } = storeToRefs(store)
+
+const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay } = store
 
 const edited = ref(false)
 const chartPanelOpened = ref(false)
@@ -35,58 +31,9 @@ const setDayDisplayMode = () => {
     dayDisplayMode.value = !dayDisplayMode.value
 }
 
-const getTimeSheet = async () => {
-    const { data, error } = await supabase.from('timesheets').select('*').eq('userId', user.value?.id ?? '').eq('label', route.params.dateId)
-    if (error) {
-        console.error(error);
-    } else {
-        currentDate.value = new Date(route.params.dateId as string);
-        if (!data || !data.length) {
-            isTimeSheetCreated.value = false;
-        } else {
-            isTimeSheetCreated.value = true;
-            monthTimeSheet.value = data[0];
-            timeSheetRows.value = monthTimeSheet.value?.content ?? [];
-            timeSheetRowsStyled.value = timeSheetRows.value.map((row) => {
-                return {
-                    ...row,
-                    class: row.type === 'off' ? 'bg-red-100 dark:bg-red-900' : row.type === 'weekend' ? 'bg-gray-200 dark:bg-slate-600' : 'py-0'
-                }
-            })
-            const selectedMonthAndYear = useDateFormat(currentDate.value, 'YYYY-MM').value;
-            const currentMonthAndYear = useDateFormat(new Date(), 'YYYY-MM').value;
-            if (selectedMonthAndYear < currentMonthAndYear) {
-                timeSheetRowsStyled.value.filter(row => row.type === 'work').forEach((row) => {
-                    checkRow(row);
-                });
-            } else {
-                timeSheetRowsStyled.value.filter(row => row.type === 'work'
-                    && row.date && parseInt(row.date.substring(0, 2)) <= new Date().getDate()
-                ).forEach((row) => {
-                    checkRow(row);
-                });
-            }
-        }
-    }
-};
-
-const createTimeSheet = async () => {
-    formatMonthTable(currentDate.value.getMonth() + 1);
-    const { data, error } = await supabase.from('timesheets').upsert([{ label: useDateFormat(currentDate.value, 'YYYY-MM').value, userId: user.value?.id ?? '', content: timeSheetRowsStyled.value }]).select('*')
-    if (error) {
-        console.error(error);
-    } else {
-        isTimeSheetCreated.value = true;
-        monthTimeSheet.value = data[0];
-    }
-};
-
 const updateTimeSheet = async () => {
-    const { data, error } = await supabase.from('timesheets').update({ content: timeSheetRowsStyled.value }).match({ id: monthTimeSheet.value?.id ?? 0 }).select('*')
-    if (error) {
-        console.error(error);
-    } else {
-        monthTimeSheet.value = data[0];
+    const success = await updateTimesheet()
+    if (success) {
         saveToast.add({
             title: 'Time sheet saved',
             description: 'Your time sheet has been saved',
@@ -94,29 +41,13 @@ const updateTimeSheet = async () => {
             timeout: 5000,
         })
         edited.value = false;
-    }
-};
-
-const getDayType = (date: Date) => {
-    const day = date.getDay();
-    if (day === 0 || day === 6) {
-        return 'weekend';
-    }
-    return 'work';
-};
-
-const formatMonthTable = (month: number) => {
-    const numDaysInMonth = new Date(new Date().getFullYear(), month, 0).getDate();
-    timeSheetRowsStyled.value = [];
-    for (let i = 1; i <= numDaysInMonth; i++) {
-        const date = new Date(new Date().getFullYear(), month - 1, i);
-        timeSheetRowsStyled.value.push({
-            date: useDateFormat(date, 'ddd DD-MM').value,
-            client: '',
-            subject: '',
-            comment: '',
-            type: getDayType(date)
-        });
+    } else {
+        saveToast.add({
+            title: 'Error',
+            description: 'An error occured while saving your time sheet',
+            icon: 'error',
+            timeout: 5000,
+        })
     }
 };
 
@@ -151,19 +82,6 @@ const fillAmp = (row: any, index: number, fill: boolean) => {
     timeSheetRowsStyled.value.splice(index, 1, { ...row, ampFilled: fill })
 };
 
-const splitDay = (row: any, index: number) => {
-    const insertIndex = timeSheetRowsStyled.value.filter(r => r.date === row.date).length - 1 + index;
-    timeSheetRowsStyled.value.splice(insertIndex + 1, 0, {
-        date: row.date,
-        client: '',
-        subject: '',
-        comment: '',
-        class: row.class,
-        type: row.type,
-        halfDay: row.halfDay,
-    });
-};
-
 const removeRow = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index, 1);
     checkRow(row);
@@ -179,7 +97,7 @@ const pasteRow = (row: any, index: number) => {
 };
 
 onMounted(async () => {
-    await getTimeSheet()
+    await getTimesheet(route.params.dateId as string)
     await fetchClients()
     edited.value = false;
 })
@@ -187,15 +105,6 @@ onMounted(async () => {
 watch(timeSheetRowsStyled, () => {
     edited.value = true;
 }, { deep: true })
-
-const checkRow = (row: any) => {
-    const totalValues = row.halfDay ? [3.8, 3.9] : [7.7];
-    const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date);
-    const total = impactedRows.reduce((acc, r) => acc + Number(r.timeSpent), 0);
-    impactedRows.forEach((r) => {
-        r.class = totalValues.includes(total) ? 'bg-green-100 dark:bg-green-900' : 'bg-orange-100 dark:bg-orange-900';
-    });
-};
 
 const resetRow = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, amp: '', ampFilled: false, client: '', comment: '', subject: '', timeSpent: '', halfDay: false })
@@ -277,7 +186,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
             <MonthBanner :monthAndYear="useDateFormat(currentDate, 'MMMM YYYY').value" @prevMonth="setPrevMonth"
                 @nextMonth="setNextMonth"></MonthBanner>
             <span v-if="!isTimeSheetCreated">
-                <UButton @click="createTimeSheet" icon="i-material-symbols-create-new-folder" />
+                <UButton @click="createTimesheet" icon="i-material-symbols-create-new-folder" />
             </span>
             <span v-else>
                 <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded" :disabled="!edited"
@@ -430,6 +339,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                 <UTable :rows="workByAmpArray" />
             </UCard>
         </USlideover>
+        <UNotifications />
     </div>
 </template>
 <style lang="scss" scoped></style>

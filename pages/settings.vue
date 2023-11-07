@@ -5,7 +5,6 @@ const client = ref('')
 
 onMounted(async () => {
   await fetchClients()
-  console.log(clientList.value)
 })
 
 const goToAmpTicketList = (client: string) => {

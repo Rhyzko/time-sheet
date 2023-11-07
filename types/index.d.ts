@@ -9,7 +9,7 @@ declare interface TimeRow {
     type?: 'work' | 'weekend' | 'off'
     class?: string
     halfDay?: boolean
-  }
+}
 
 declare interface Client {
     label: string,
@@ -19,7 +19,7 @@ declare interface Client {
 }
 
 declare interface TimeSheet {
-    id: number,
+    id?: number,
     label: string,
     userId: string,
     content: Json

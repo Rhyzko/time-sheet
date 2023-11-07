@@ -25,7 +25,8 @@ export default defineNuxtConfig({
     'nuxt-icon',
     '@formkit/auto-animate/nuxt',
     "@nuxtjs/supabase",
-    "@nuxt/image"
+    "@nuxt/image",
+    '@pinia/nuxt'
   ],
   pwa: {
     registerType: 'autoUpdate',

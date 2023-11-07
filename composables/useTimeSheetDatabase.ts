@@ -1,8 +1,40 @@
 import type { Database } from "~/types/supabase";
 export default function useTimeSheetDatabase() {
-    const supabase = useSupabaseClient<Database>();
+    const supabase = useSupabaseClient<Database>()
 
     const clientList = ref<Client[]>([])
+    const monthTimeSheet = ref<TimeSheet | undefined>(undefined)
+
+    const getTimeSheet = async (dateId: string, userId: string) => {
+        const { data, error } = await supabase.from('timesheets').select('*').eq('userId', userId).eq('label', dateId)
+        if (error) {
+            console.error(error);
+        } else {
+            monthTimeSheet.value = data[0];
+            return true
+        }
+    }
+
+    const updateTimeSheet = async (timeSheetRows: any) => {
+        const { data, error } = await supabase.from('timesheets').update({ content: timeSheetRows }).match({ id: monthTimeSheet.value?.id ?? 0 }).select('*')
+        if (error) {
+            console.error(error);
+        } else {
+            monthTimeSheet.value = data[0];
+            return true
+        }
+    };
+
+    const createTimeSheet = async (timeSheet: TimeSheet) => {
+        const { label, userId, content } = timeSheet
+        const { data, error } = await supabase.from('timesheets').upsert([{ label, userId, content }]).select('*')
+        if (error) {
+            console.error(error);
+        } else {
+            monthTimeSheet.value = data[0]
+            return true
+        }
+    }
 
     const fetchClients = async () => {
         const { data, error } = await supabase.from('clients').select('*')
@@ -33,11 +65,11 @@ export default function useTimeSheetDatabase() {
 
     const updateClientColor = async (id: number, color: string) => {
         const { data, error } = await supabase.from('clients').update({ color }).match({ id })
-        if(error) {
+        if (error) {
             console.error(error)
         } else {
             clientList.value = clientList.value.map((client) => {
-                if(client.id === id) {
+                if (client.id === id) {
                     return {
                         ...client,
                         color
@@ -51,9 +83,13 @@ export default function useTimeSheetDatabase() {
 
     return {
         clientList,
+        monthTimeSheet,
         fetchClients,
         addClient,
         deleteClient,
-        updateClientColor
+        updateClientColor,
+        getTimeSheet,
+        updateTimeSheet,
+        createTimeSheet
     }
 }
