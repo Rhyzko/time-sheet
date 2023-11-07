@@ -51,6 +51,12 @@ const updateTimeSheet = async () => {
     }
 };
 
+const saveTimesheet = async () => {
+    if (edited.value) {
+        await updateTimeSheet()
+    }
+}
+
 const setNextMonth = async () => {
     const nextMonthDateId = useDateFormat(currentDate.value.setMonth(currentDate.value.getMonth() + 1), 'YYYY-MM').value;
     await navigateTo(`/timesheet/${nextMonthDateId}`)
@@ -175,7 +181,8 @@ const totalTime = computed(() => {
 
 const getRowTimeTooltip = (row: TimeRow) => {
     if (row.type === 'work' && !row.halfDay) {
-        const totalDay = timeSheetRowsStyled.value.filter((r) => r.date === row.date).reduce((acc, r) => acc + Number(r.timeSpent), 0)
+        const totalDay = timeSheetRowsStyled.value.filter((r) => r.date && r.date === row.date).reduce((acc, r) => acc + Number(r.timeSpent), 0)
+        if (isNaN(totalDay)) return 'Il reste 7.7h à saisir'
         return totalDay.toFixed(1) === '7.7' ? null : `Il reste ${(7.7 - totalDay).toFixed(1)}h à saisir`
     }
 }
@@ -184,6 +191,16 @@ const goToAmpTicketList = (ticketList: string[]) => {
     const formattedList = ticketList.filter(ticket => ticket).join('%252C')
     window.open(`https://amp.service-now.com/now/nav/ui/classic/params/target/task_list.do%3Fsysparm_query%3Dsys_class_name%253Dincident%255EORsys_class_name%253Dsc_req_item%255EnumberIN${formattedList}%255EORDERBYnumber%26sysparm_first_row%3D1%26sysparm_view%3D`, '_blank')
 }
+
+const { ctrl_s } = useMagicKeys({
+    passive: false,
+    onEventFired(e) {
+        if (e.ctrlKey && e.key === 's' && e.type === 'keydown')
+            e.preventDefault()
+    },
+})
+
+whenever(ctrl_s, saveTimesheet)
 window.onbeforeunload = () => (edited.value ? true : null);
 </script>
 
@@ -259,12 +276,11 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         </USelectMenu>
                         <UInput v-model="row.subject" v-if="row.type === 'work'" :ui="{ base: 'w-64' }">
                         </UInput>
-                        <UTooltip :popper="{ placement: 'right' }">
+                        <UTooltip :popper="{ placement: 'right' }" v-if="row.type === 'work'">
                             <template #text>
                                 <span>{{ getRowTimeTooltip(row) ?? '😎' }}</span>
                             </template>
-                            <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @blur="checkRow(row)"
-                                v-if="row.type === 'work'" />
+                            <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @blur="checkRow(row)" />
                         </UTooltip>
                         <span v-if="row.type === 'work'" class="flex flex-row gap-2">
                             <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
