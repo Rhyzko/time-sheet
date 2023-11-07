@@ -8,8 +8,10 @@ export const useTimesheetStore = defineStore('timesheet', () => {
 
     const user = useSupabaseUser()
     const timeSheetRowsStyled = ref<TimeRow[]>([])
+    const timeSheetRowsHistory = ref<TimeRow[][]>([])
     const isTimeSheetCreated = ref(false)
     const currentDate = ref(new Date())
+    const timeSheetEdited = ref(false)
 
     function checkRow(row: any) {
         const totalValues = row.halfDay ? ['3.8', '3.9'] : ['7.7'];
@@ -88,9 +90,9 @@ export const useTimesheetStore = defineStore('timesheet', () => {
                 subject: '',
                 comment: '',
                 type: getDayType(date)
-            });
+            })
         }
-    };
+    }
 
     function getDayType(date: Date) {
         const day = date.getDay();
@@ -98,17 +100,31 @@ export const useTimesheetStore = defineStore('timesheet', () => {
             return 'weekend';
         }
         return 'work';
-    };
+    }
+
+    function undo() {
+    }
+
+    function redo() {
+    }
+
+    watch(() => timeSheetRowsStyled, () => {
+        timeSheetEdited.value = true
+    }, { deep: true })
 
     return {
         timeSheetRowsStyled,
+        timeSheetRowsHistory,
         isTimeSheetCreated,
         currentDate,
         monthTimeSheet,
+        timeSheetEdited,
         getTimesheet,
         updateTimesheet,
         createTimesheet,
         checkRow,
-        splitDay
+        splitDay,
+        undo,
+        redo
     }
 })

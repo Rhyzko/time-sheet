@@ -8,15 +8,13 @@ const signInWithAzure = async () => {
             scopes: 'email',
         },
     })
-
 }
-
 </script>
 
 <template>
-    <div class=" flex justify-center items-center">
+    <div class="flex justify-center items-center pt-2">
         <UCard>
-            <h1>Login with:</h1>
+            <h1 class="text-xl text-center mb-4">Login</h1>
             <UButton @click="signInWithAzure">
                 <Icon name="mdi-azure" size="2em" class="mr-2"></Icon>Azure
             </UButton>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { auth } = useSupabaseClient()
 const router = useRouter()
+const user = useSupabaseUser()
 
 const logout = async () => {
     await auth.signOut()
@@ -14,12 +15,15 @@ const logout = async () => {
         <NuxtLink to="/">
             <h2 class="font-bold text-xl text-orange-500 ml-2">Avatime-sheet</h2>
         </NuxtLink>
-        <NuxtLink to="/settings" class="ml-auto">
-            <UButton icon="i-heroicons-cog-6-tooth" class="ml-auto" />
-        </NuxtLink>
-        <ColorModeButton />
-        <span class="cursor-pointer ml-2 mr-2">
-            <UButton icon="i-material-symbols-exit-to-app-rounded" @click="logout" />
+
+        <span class="ml-auto">
+            <NuxtLink to="/settings" class="ml-auto" v-if="user">
+                <UButton icon="i-heroicons-cog-6-tooth" class="ml-auto" />
+            </NuxtLink>
+            <ColorModeButton class="mr-2" />
+            <span class="cursor-pointer mr-2" v-if="user">
+                <UButton icon="i-material-symbols-exit-to-app-rounded" @click="logout" />
+            </span>
         </span>
     </header>
     <main class="mainContent dark:bg-slate-800">
@@ -41,5 +45,6 @@ const logout = async () => {
 
 .mainContent {
     margin-top: 64px;
+    height: calc(100% - 64px);
 }
 </style>

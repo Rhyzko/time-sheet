@@ -12,11 +12,10 @@ definePageMeta({
 const route = useRoute()
 const store = useTimesheetStore()
 
-const { timeSheetRowsStyled, isTimeSheetCreated, currentDate } = storeToRefs(store)
+const { timeSheetRowsStyled, timeSheetRowsHistory, isTimeSheetCreated, currentDate, timeSheetEdited } = storeToRefs(store)
 
-const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay } = store
+const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay, undo } = store
 
-const edited = ref(false)
 const chartPanelOpened = ref(false)
 const ampPanelOpened = ref(false)
 
@@ -40,7 +39,7 @@ const updateTimeSheet = async () => {
             icon: 'success',
             timeout: 5000,
         })
-        edited.value = false;
+        timeSheetEdited.value = false;
     } else {
         saveToast.add({
             title: 'Error',
@@ -52,7 +51,7 @@ const updateTimeSheet = async () => {
 };
 
 const saveTimesheet = async () => {
-    if (edited.value) {
+    if (timeSheetEdited.value) {
         await updateTimeSheet()
     }
 }
@@ -105,12 +104,8 @@ const pasteRow = (row: any, index: number) => {
 onMounted(async () => {
     await getTimesheet(route.params.dateId as string)
     await fetchClients()
-    edited.value = false;
+    timeSheetEdited.value = false;
 })
-
-watch(timeSheetRowsStyled, () => {
-    edited.value = true;
-}, { deep: true })
 
 const resetRow = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index, timeSheetRowsStyled.value.filter(r => r.date === row.date).length, { ...row, amp: '', ampFilled: false, client: '', comment: '', subject: '', timeSpent: '', halfDay: false })
@@ -168,6 +163,7 @@ const workByAmpArray = computed(() => {
 function decimalToTime(decimalValue: number) {
     const hours = Math.floor(decimalValue);
     const minutes = Math.round((decimalValue - hours) * 60);
+    if (isNaN(hours) || isNaN(minutes)) return null;
     return `${hours.toString()}h ${minutes.toString()}m`;
 }
 
@@ -176,7 +172,11 @@ const totalAmp = computed(() => {
 })
 
 const totalTime = computed(() => {
-    return timeSheetRowsStyled.value.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0)
+    const total = timeSheetRowsStyled.value.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0);
+    if (isNaN(total)) {
+        return null;
+    }
+    return total;
 })
 
 const getRowTimeTooltip = (row: TimeRow) => {
@@ -201,7 +201,8 @@ const { ctrl_s } = useMagicKeys({
 })
 
 whenever(ctrl_s, saveTimesheet)
-window.onbeforeunload = () => (edited.value ? true : null);
+window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
+
 </script>
 
 <template>
@@ -212,9 +213,15 @@ window.onbeforeunload = () => (edited.value ? true : null);
             <span v-if="!isTimeSheetCreated">
                 <UButton @click="createTimesheet" icon="i-material-symbols-create-new-folder" />
             </span>
-            <span v-else>
-                <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded" :disabled="!edited"
-                    :color="edited ? 'primary' : 'gray'" />
+            <span v-else class="flex flex-row gap-2">
+                <UTooltip text="will be available soon 😉">
+                    <UButton icon="i-mdi-undo" disabled @click="undo"></UButton>
+                </UTooltip>
+                <UTooltip text="will be available soon 😉">
+                    <UButton icon="i-mdi-redo" disabled></UButton>
+                </UTooltip>
+                <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded"
+                    :disabled="!timeSheetEdited" :color="timeSheetEdited ? 'primary' : 'gray'" />
             </span>
             <UTooltip :text="dayDisplayMode ? 'View all' : 'View today'">
                 <UButton @click="setDayDisplayMode"
@@ -289,7 +296,8 @@ window.onbeforeunload = () => (edited.value ? true : null);
                                 @click="fillAmp(row, index, true)" />
                             <span v-else class="w-8"></span>
                             <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
-                            <UTooltip text="Go to AMP ticket" v-if="row.amp">
+                            <UTooltip :text="`Go to AMP ticket (${workByAmpArray.find(r => r.amp === row.amp)?.total})`"
+                                v-if="row.amp">
                                 <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp"
                                     @click="goToAmpTicket(row.amp)" />
                             </UTooltip>
@@ -321,7 +329,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
                             </UPopover>
                         </section>
                     </div>
-                    <UDivider :ui="{ border: { base: 'flex border-gray-400 dark:border-gray-800' } }"
+                    <UDivider :ui="{ border: { base: 'flex border-gray-400 dark:border-white-200' } }"
                         v-if="!dayDisplayMode && row.type === 'work' && index < (timeSheetRowsStyled.length - 1) && row.date !== timeSheetRowsStyled[index + 1].date && timeSheetRowsStyled[index + 1].type !== 'weekend'">
                     </UDivider>
                 </div>
