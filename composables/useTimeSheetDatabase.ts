@@ -41,7 +41,7 @@ export default function useTimeSheetDatabase() {
         if (error) {
             console.error(error)
         } else {
-            clientList.value = data ?? []
+            clientList.value = data?.sort((a, b) => a.label.localeCompare(b.label)) ?? []
         }
     }
 
