@@ -153,8 +153,8 @@ const workByAmpArray = computed(() => {
     return Object.keys(workByAmp.value).sort().map((key) => ({
         amp: key,
         client: workByAmp.value[key].client,
-        filled: workByAmp.value[key].timeFilled.toFixed(1).replace(/\.?0+$/, ''),
-        toFill: workByAmp.value[key].timeToFill.toFixed(1).replace(/\.?0+$/, ''),
+        // filled: workByAmp.value[key].timeFilled.toFixed(1).replace(/\.?0+$/, ''),
+        // toFill: workByAmp.value[key].timeToFill.toFixed(1).replace(/\.?0+$/, ''),
         total: decimalToTime(workByAmp.value[key].timeFilled + workByAmp.value[key].timeToFill),
     }))
 })
@@ -172,6 +172,13 @@ const totalAmp = computed(() => {
 const totalTime = computed(() => {
     return timeSheetRowsStyled.value.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0)
 })
+
+const getRowTimeTooltip = (row: TimeRow) => {
+    if (row.type === 'work' && !row.halfDay) {
+        const totalDay = timeSheetRowsStyled.value.filter((r) => r.date === row.date).reduce((acc, r) => acc + Number(r.timeSpent), 0)
+        return totalDay.toFixed(1) === '7.7' ? null : `Il reste ${(7.7 - totalDay).toFixed(1)}h à saisir`
+    }
+}
 
 const goToAmpTicketList = (ticketList: string[]) => {
     const formattedList = ticketList.filter(ticket => ticket).join('%252C')
@@ -252,8 +259,13 @@ window.onbeforeunload = () => (edited.value ? true : null);
                         </USelectMenu>
                         <UInput v-model="row.subject" v-if="row.type === 'work'" :ui="{ base: 'w-64' }">
                         </UInput>
-                        <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @blur="checkRow(row)" type="number"
-                            v-if="row.type === 'work'" />
+                        <UTooltip :popper="{ placement: 'right' }">
+                            <template #text>
+                                <span>{{ getRowTimeTooltip(row) ?? '😎' }}</span>
+                            </template>
+                            <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @blur="checkRow(row)"
+                                v-if="row.type === 'work'" />
+                        </UTooltip>
                         <span v-if="row.type === 'work'" class="flex flex-row gap-2">
                             <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
                                 @click="fillAmp(row, index, false)" variant="ghost" />
@@ -301,7 +313,7 @@ window.onbeforeunload = () => (edited.value ? true : null);
         </section>
         <section v-else>
             <USkeleton class="h-12 mt-5 w-full" />
-            <USkeleton class="h-8 my-3 w-full" v-for=" line  in  10 " />
+            <USkeleton class="h-8 my-3 w-full" v-for="line in 10" />
         </section>
         <USlideover v-model="chartPanelOpened">
             <UCard class="flex flex-col flex-1"
@@ -328,9 +340,6 @@ window.onbeforeunload = () => (edited.value ? true : null);
                             </p>
                         </div>
                         <div>
-                            <UButton
-                                @click="goToAmpTicketList(workByAmpArray.filter(row => row.toFill !== '0').map(row => row.amp))"
-                                icon="i-material-symbols-filter-list-rounded" />
                             <UButton @click="goToAmpTicketList(workByAmpArray.map(row => row.amp))" class="ml-2"
                                 icon="i-material-symbols-list-alt-outline-rounded" />
                         </div>
