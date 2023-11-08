@@ -12,7 +12,7 @@ const signInWithAzure = async () => {
 </script>
 
 <template>
-    <div class="flex justify-center items-center pt-2">
+    <div class="flex justify-center items-center pt-2 loginContainer">
         <UCard>
             <h1 class="text-xl text-center mb-4">Login</h1>
             <UButton @click="signInWithAzure">
@@ -22,4 +22,8 @@ const signInWithAzure = async () => {
     </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.loginContainer {
+    height: calc(100vh - 148px);
+}
+</style>
