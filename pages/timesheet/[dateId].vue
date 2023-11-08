@@ -26,6 +26,47 @@ const { clientList, fetchClients } = useTimeSheetDatabase()
 const dayDisplayMode = ref(false)
 const copiedRow = ref<TimeRow | undefined>(undefined)
 
+const ampColumns = [
+    {
+        label: 'AMP',
+        key: 'amp',
+        sortable: true,
+    },
+    {
+        label: 'Client',
+        key: 'client',
+        sortable: true,
+    },
+    {
+        label: 'Total',
+        key: 'total',
+        sortable: true,
+    },
+    {
+        label: 'Go to ticket',
+        key: 'goToTicket'
+    }
+]
+
+const ampTables = [
+    {
+        label: 'In a nutshell',
+        icon: 'i-heroicons-information-circle',
+        slot: 'nutshell'
+    },
+    {
+        label: 'Tickets to fill in AMP',
+        icon: 'i-material-symbols-drive-file-rename-outline-rounded',
+        defaultOpen: true,
+        slot: 'amp-not-filled'
+    },
+    {
+        label: 'All tickets',
+        icon: 'i-material-symbols-view-list-outline',
+        slot: 'all'
+    }
+]
+
 const setDayDisplayMode = () => {
     dayDisplayMode.value = !dayDisplayMode.value
 }
@@ -155,7 +196,7 @@ const workByAmpArray = computed(() => {
         amp: key,
         client: workByAmp.value[key].client,
         // filled: workByAmp.value[key].timeFilled.toFixed(1).replace(/\.?0+$/, ''),
-        // toFill: workByAmp.value[key].timeToFill.toFixed(1).replace(/\.?0+$/, ''),
+        toFill: workByAmp.value[key].timeToFill,
         total: decimalToTime(workByAmp.value[key].timeFilled + workByAmp.value[key].timeToFill),
     }))
 })
@@ -192,6 +233,13 @@ const goToAmpTicketList = (ticketList: string[]) => {
     window.open(`https://amp.service-now.com/now/nav/ui/classic/params/target/task_list.do%3Fsysparm_query%3Dsys_class_name%253Dincident%255EORsys_class_name%253Dsc_req_item%255EnumberIN${formattedList}%255EORDERBYnumber%26sysparm_first_row%3D1%26sysparm_view%3D`, '_blank')
 }
 
+const checkRowAndAmpFilled = (row: TimeRow) => {
+    if (row.ampFilled === true) {
+        row.ampFilled = false
+    }
+    checkRow(row)
+}
+
 const { ctrl_s } = useMagicKeys({
     passive: false,
     onEventFired(e) {
@@ -202,7 +250,6 @@ const { ctrl_s } = useMagicKeys({
 
 whenever(ctrl_s, saveTimesheet)
 window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
-
 </script>
 
 <template>
@@ -287,7 +334,8 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                             <template #text>
                                 <span>{{ getRowTimeTooltip(row) ?? '😎' }}</span>
                             </template>
-                            <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @blur="checkRow(row)" />
+                            <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @focus="$event.target.select()"
+                                @change="checkRowAndAmpFilled(row)" />
                         </UTooltip>
                         <span v-if="row.type === 'work'" class="flex flex-row gap-2">
                             <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
@@ -298,8 +346,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                             <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
                             <UTooltip :text="`Go to AMP ticket (${workByAmpArray.find(r => r.amp === row.amp)?.total})`"
                                 v-if="row.amp">
-                                <UButton icon="i-heroicons-arrow-right-circle" v-if="row.amp"
-                                    @click="goToAmpTicket(row.amp)" />
+                                <UButton icon="i-heroicons-arrow-right-circle" @click="goToAmpTicket(row.amp)" />
                             </UTooltip>
                             <span v-else class="w-8"></span>
                         </span>
@@ -343,7 +390,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
             <UCard class="flex flex-col flex-1"
                 :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
                 <template #header>
-                    Work repartition
+                    <div class="text-center text-2xl">Work repartition</div>
                 </template>
                 <DonutChart :dataset="workRepartitionDataset" />
             </UCard>
@@ -351,25 +398,56 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
         <USlideover v-model="ampPanelOpened" :ui="{ width: 'w-screen max-w-[50%]' }" side="left">
             <UCard class="flex flex-col" :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
                 <template #header>
-                    AMP View
+                    <div class="text-center text-2xl">AMP View</div>
                 </template>
-                <UCard :ui="{ ring: 'ring-1 ring-primary dark:ring-gray-800' }">
-                    <section class="flex flex-row items-center place-content-between">
-                        <div class="flex flex-col text-sm text-primary">
-                            <p>Chargeable time {{ totalAmp.toFixed(1) }}</p>
-                            <p>Chargeability
-                                <span class="text-sm font-medium">{{ ((totalAmp ?? 0) / (totalTime ?? 1) * 100).toFixed(1)
-                                }}</span>
-                                %
-                            </p>
-                        </div>
-                        <div>
-                            <UButton @click="goToAmpTicketList(workByAmpArray.map(row => row.amp))" class="ml-2"
-                                icon="i-material-symbols-list-alt-outline-rounded" />
-                        </div>
-                    </section>
-                </UCard>
-                <UTable :rows="workByAmpArray" />
+                <UAccordion :items="ampTables" multiple class="mt-4">
+                    <template #nutshell>
+                        <UCard :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">
+                            <section class="flex flex-row items-center place-content-between">
+                                <div class="flex flex-col text-sm text-primary">
+                                    <p>Chargeable time {{ totalAmp.toFixed(1) }}</p>
+                                    <p>Chargeability
+                                        <span class="text-sm font-medium">{{ ((totalAmp ?? 0) / (totalTime ?? 1) *
+                                            100).toFixed(1)
+                                        }}</span>
+                                        %
+                                    </p>
+                                    <p>Time without AMP ticket : {{ ((totalTime ?? 0) - totalAmp).toFixed(1) }}</p>
+                                </div>
+                                <div>
+                                    <UButton @click="goToAmpTicketList(workByAmpArray.map(row => row.amp))" class="ml-2"
+                                        icon="i-material-symbols-list-alt-outline-rounded" />
+                                </div>
+                            </section>
+                        </UCard>
+                    </template>
+                    <template #amp-not-filled>
+                        <UCard v-if="workByAmpArray.filter(row => row.amp && row.toFill > 0).length"
+                            :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">
+                            <UTable :rows="workByAmpArray.filter(row => row.amp && row.toFill > 0)" :columns="ampColumns">
+                                <template #goToTicket-data="{ row }">
+                                    <UButton v-if="row.amp" icon="i-heroicons-arrow-right-circle"
+                                        @click="goToAmpTicket(row.amp)" />
+                                    <span v-else class="w-8"></span>
+                                </template>
+                            </UTable>
+                        </UCard>
+                        <UCard v-else :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">You're up to date in
+                            AMP,
+                            congrats !</UCard>
+                    </template>
+                    <template #all>
+                        <UCard :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">
+                            <UTable :rows="workByAmpArray.filter(row => row.amp)" :columns="ampColumns">
+                                <template #goToTicket-data="{ row }">
+                                    <UButton v-if="row.amp" icon="i-heroicons-arrow-right-circle"
+                                        @click="goToAmpTicket(row.amp)" />
+                                    <span v-else class="w-8"></span>
+                                </template>
+                            </UTable>
+                        </UCard>
+                    </template>
+                </UAccordion>
             </UCard>
         </USlideover>
         <UNotifications />

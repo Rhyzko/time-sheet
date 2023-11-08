@@ -73,6 +73,7 @@ export const useTimesheetStore = defineStore('timesheet', () => {
             client: '',
             subject: '',
             comment: '',
+            timeSpent: 0,
             class: row.class,
             type: row.type,
             halfDay: row.halfDay
