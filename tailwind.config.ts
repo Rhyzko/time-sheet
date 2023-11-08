@@ -4,6 +4,7 @@ module.exports = {
         'dark:bg-slate-800',
         'dark:bg-slate-600',
         'dark:bg-red-900',
+        'dark:bg-green-900',
         'dark:border-white-200',
         'dark:divide-gray-800',
         'dark:ring-gray-800',

@@ -29,8 +29,18 @@ const logout = async () => {
     <main class="mainContent dark:bg-slate-800">
         <slot />
     </main>
+    <footer class="footerContent bg-white dark:bg-slate-800">
+        <UDivider />
+        <div class="flex flex-row items-center justify-center bg-white dark:bg-slate-800">
+            <p class="text-gray-500 dark:text-gray-400 text-sm flex flex-row align-middle items-center">
+                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.1.0, made with
+                <NuxtLink to="https://nuxt.com/" target="_blank">
+                    <Icon name="logos:nuxt-icon" />
+                </NuxtLink>
+            </p>
+        </div>
+    </footer>
 </template>
-
 <style lang="scss" scoped>
 .appbar {
     top: 0;
@@ -45,6 +55,10 @@ const logout = async () => {
 
 .mainContent {
     margin-top: 64px;
-    height: calc(100% - 64px);
+    height: calc(100% + 64px);
+}
+
+.footerContent {
+    padding-top: 48px;
 }
 </style>
