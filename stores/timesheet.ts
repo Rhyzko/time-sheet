@@ -13,6 +13,31 @@ export const useTimesheetStore = defineStore('timesheet', () => {
     const currentDate = ref(new Date())
     const timeSheetEdited = ref(false)
 
+    const workByAmp = computed(() => {
+        return timeSheetRowsStyled.value.reduce((acc, row) => {
+            const amp: string = row.amp ?? ''
+            if (!acc[amp]) {
+                acc[amp] = { amp, timeFilled: 0, timeToFill: 0, client: row.client ?? '' }
+            }
+            if (row.ampFilled) {
+                acc[amp].timeFilled += Number(row.timeSpent)
+            } else {
+                acc[amp].timeToFill += Number(row.timeSpent)
+            }
+            return acc;
+        }, {} as Record<string, { amp: string, client: string, timeFilled: number, timeToFill: number }>)
+    })
+
+    const workByAmpArray = computed(() => {
+        return Object.keys(workByAmp.value).sort().map((key) => ({
+            amp: key,
+            client: workByAmp.value[key].client,
+            // filled: workByAmp.value[key].timeFilled.toFixed(1).replace(/\.?0+$/, ''),
+            toFill: workByAmp.value[key].timeToFill,
+            total: decimalToTime(workByAmp.value[key].timeFilled + workByAmp.value[key].timeToFill),
+        }))
+    })
+
     function checkRow(row: any) {
         const totalValues = row.halfDay ? ['3.8', '3.9'] : ['7.7'];
         const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date);
@@ -103,6 +128,23 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         return 'work';
     }
 
+    function fillAmp(row: any, index: number, fill: boolean) {
+        timeSheetRowsStyled.value.splice(index, 1, { ...row, ampFilled: fill })
+    };
+
+    function validateAmpInput(amp: string, fill: boolean) {
+        timeSheetRowsStyled.value.filter(r => r.amp === amp).forEach(row => {
+            row.ampFilled = fill
+        })
+    }
+
+    function decimalToTime(decimalValue: number) {
+        const hours = Math.floor(decimalValue);
+        const minutes = Math.round((decimalValue - hours) * 60);
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        return `${hours.toString()}h ${minutes.toString()}m`;
+    }
+
     function undo() {
     }
 
@@ -120,11 +162,14 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         currentDate,
         monthTimeSheet,
         timeSheetEdited,
+        workByAmpArray,
         getTimesheet,
         updateTimesheet,
         createTimesheet,
         checkRow,
         splitDay,
+        fillAmp,
+        validateAmpInput,
         undo,
         redo
     }

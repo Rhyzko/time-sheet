@@ -20,13 +20,17 @@ const selectColor = async (color: string, clientId: number) => {
       <template #header>
         <span>{{ client.label }}</span>
       </template>
-      <section class="flex flex-row">
+      <section class="flex flex-row mb-2">
         <UTooltip text="Go to AMP tickets">
           <UButton icon="i-material-symbols-view-list-outline" @click="goToClientAmpTicketList(client.label)"></UButton>
         </UTooltip>
         <Color-Picker class="ml-auto" @selected="(color) => selectColor(color.code, client.id)"></Color-Picker>
         <UButton icon="i-heroicons-trash" class="ml-2" @click=" deleteClient(client.id)"></UButton>
       </section>
+      <UTooltip :text="client.chargeable ? 'Chargeable' : 'Not chargeable'">
+        <UToggle on-icon="i-heroicons-check-20-solid" off-icon="i-heroicons-x-mark-20-solid" v-model="client.chargeable"
+          disabled class="disabled:cursor-auto" />
+      </UTooltip>
     </UCard>
     <UCard class="w-56">
       <template #header>

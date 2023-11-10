@@ -13,7 +13,7 @@ const route = useRoute()
 
 const store = useTimesheetStore()
 const { timeSheetRowsStyled, isTimeSheetCreated, currentDate, timeSheetEdited } = storeToRefs(store)
-const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay } = store
+const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay, fillAmp, workByAmpArray } = store
 
 const { goToAmpTicket, createFeature, createIncident, goToClientAmpTicketList } = useAmp()
 
@@ -84,10 +84,6 @@ const setDayOn = (row: any, index: number) => {
     checkRow(row)
 };
 
-const fillAmp = (row: any, index: number, fill: boolean) => {
-    timeSheetRowsStyled.value.splice(index, 1, { ...row, ampFilled: fill })
-};
-
 const removeRow = (row: any, index: number) => {
     timeSheetRowsStyled.value.splice(index, 1);
     checkRow(row);
@@ -113,37 +109,6 @@ const resetRow = (row: any, index: number) => {
     checkRow(row);
 };
 
-const workByAmp = computed(() => {
-    return timeSheetRowsStyled.value.reduce((acc, row) => {
-        const amp: string = row.amp ?? ''
-        if (!acc[amp]) {
-            acc[amp] = { amp, timeFilled: 0, timeToFill: 0, client: row.client ?? '' }
-        }
-        if (row.ampFilled) {
-            acc[amp].timeFilled += Number(row.timeSpent)
-        } else {
-            acc[amp].timeToFill += Number(row.timeSpent)
-        }
-        return acc;
-    }, {} as Record<string, { amp: string, client: string, timeFilled: number, timeToFill: number }>)
-})
-
-const workByAmpArray = computed(() => {
-    return Object.keys(workByAmp.value).sort().map((key) => ({
-        amp: key,
-        client: workByAmp.value[key].client,
-        // filled: workByAmp.value[key].timeFilled.toFixed(1).replace(/\.?0+$/, ''),
-        toFill: workByAmp.value[key].timeToFill,
-        total: decimalToTime(workByAmp.value[key].timeFilled + workByAmp.value[key].timeToFill),
-    }))
-})
-
-function decimalToTime(decimalValue: number) {
-    const hours = Math.floor(decimalValue);
-    const minutes = Math.round((decimalValue - hours) * 60);
-    if (isNaN(hours) || isNaN(minutes)) return null;
-    return `${hours.toString()}h ${minutes.toString()}m`;
-}
 
 const getRowTimeTooltip = (row: TimeRow) => {
     if (row.type === 'work' && !row.halfDay) {
@@ -258,12 +223,14 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                             <UInput v-model="row.timeSpent" :ui="{ base: 'w-10' }" @focus="$event.target.select()"
                                 @change="checkRowAndAmpFilled(row)" />
                         </UTooltip>
-                        <span v-if="row.type === 'work'" class="flex flex-row gap-2">
+                        <span v-if="row.type === 'work' && clientList.find(c => c.label === row.client)?.chargeable"
+                            class="flex flex-row gap-2">
                             <UButton v-if="row.ampFilled" icon="i-heroicons-arrow-uturn-left" color="red"
                                 @click="fillAmp(row, index, false)" variant="ghost" />
                             <UButton v-else-if="row.amp" icon="i-heroicons-check" color="green"
                                 @click="fillAmp(row, index, true)" />
-                            <UButton v-else-if="!row.amp && row.client" icon="i-material-symbols-view-list-outline" @click="goToClientAmpTicketList(row.client)"></UButton>
+                            <UButton v-else-if="!row.amp && row.client" icon="i-material-symbols-view-list-outline"
+                                @click="goToClientAmpTicketList(row.client)"></UButton>
                             <span v-else class="w-8"></span>
                             <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
                             <UTooltip :text="`Go to AMP ticket (${workByAmpArray.find(r => r.amp === row.amp)?.total})`"
@@ -272,6 +239,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                             </UTooltip>
                             <span v-else class="w-8"></span>
                         </span>
+                        <span v-else class="w-48"></span>
                         <UInput v-model="row.comment" v-if="row.type === 'work'" :ui="{ base: 'w-64' }"></UInput>
                         <section class="flex flex-row gap-2" v-if="row.type === 'work'">
                             <UButton icon="i-material-symbols-content-copy-outline-rounded" @click="copyRow(row)" />
@@ -312,7 +280,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
             <WorkRepartition :categories="clientList" :rows="timeSheetRowsStyled" />
         </USlideover>
         <USlideover v-model="ampPanelOpened" :ui="{ width: 'w-screen max-w-[50%]' }" side="left">
-            <AmpView :workByAmpArray="workByAmpArray" />
+            <AmpView />
         </USlideover>
         <UNotifications />
     </div>

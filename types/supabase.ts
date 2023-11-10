@@ -11,18 +11,21 @@ export interface Database {
     Tables: {
       clients: {
         Row: {
+          chargeable: boolean | null
           color: string | null
           id: number
           label: string
           tags: string | null
         }
         Insert: {
+          chargeable?: boolean | null
           color?: string | null
           id?: number
           label: string
           tags?: string | null
         }
         Update: {
+          chargeable?: boolean | null
           color?: string | null
           id?: number
           label?: string
@@ -53,6 +56,7 @@ export interface Database {
           {
             foreignKeyName: "timesheets_userId_fkey"
             columns: ["userId"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           }

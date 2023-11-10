@@ -1,26 +1,16 @@
 <script setup lang="ts">
-const { timeSheetRowsStyled } = useTimesheetStore();
+const timesheetStore = useTimesheetStore()
+const { timeSheetRowsStyled } = storeToRefs(timesheetStore)
+const { validateAmpInput, workByAmpArray } = timesheetStore
 
-const { goToAmpTicket, goToAmpTicketList } = useAmp();
-
-defineProps({
-    workByAmpArray: {
-        type: Array<{
-            amp: string;
-            client: string;
-            toFill: number;
-            total: string | null;
-        }>,
-        required: true
-    }
-})
+const { goToAmpTicket, goToAmpTicketList } = useAmp()
 
 const totalAmp = computed(() => {
-    return timeSheetRowsStyled.filter((row) => row.ampFilled).reduce((acc, row) => acc + Number(row.timeSpent), 0)
+    return timeSheetRowsStyled.value.filter((row) => row.ampFilled).reduce((acc, row) => acc + Number(row.timeSpent), 0)
 })
 
 const totalTime = computed(() => {
-    const total = timeSheetRowsStyled.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0);
+    const total = timeSheetRowsStyled.value.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0);
     if (isNaN(total)) {
         return null;
     }
@@ -103,12 +93,15 @@ const ampTables = [
                         <template #goToTicket-header>
                             <span class="flex flex-row items-center align-middle">
                                 <UButton icon="i-material-symbols-list-alt-outline-rounded"
-                                    @click="goToAmpTicketList(workByAmpArray.map(row => row.amp))" class="mr-2" />
+                                    @click="goToAmpTicketList(workByAmpArray.filter(row => row.amp && row.toFill > 0).map(row => row.amp))"
+                                    class="mr-2" />
                                 All
                             </span>
                         </template>
                         <template #goToTicket-data="{ row }">
-                            <UButton v-if="row.amp" icon="i-heroicons-arrow-right-circle" @click="goToAmpTicket(row.amp)" />
+                            <UButton icon="i-heroicons-check" color="green" @click="validateAmpInput(row.amp, true)" />
+                            <UButton v-if="row.amp" icon="i-heroicons-arrow-right-circle" @click="goToAmpTicket(row.amp)"
+                                class="ml-2" />
                             <span v-else class="w-8"></span>
                         </template>
                     </UTable>

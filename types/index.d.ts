@@ -15,7 +15,8 @@ declare interface Client {
     label: string,
     id: number,
     color: string | null,
-    tags: string | null
+    tags: string | null,
+    chargeable: boolean | undefined
 }
 
 declare interface TimeSheet {
