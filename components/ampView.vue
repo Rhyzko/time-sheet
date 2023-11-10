@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const timesheetStore = useTimesheetStore()
-const { timeSheetRowsStyled } = storeToRefs(timesheetStore)
-const { validateAmpInput, workByAmpArray } = timesheetStore
+const { timeSheetRowsStyled, workByAmpArray } = storeToRefs(timesheetStore)
+const { validateAmpInput } = timesheetStore
 
 const { goToAmpTicket, goToAmpTicketList } = useAmp()
 
