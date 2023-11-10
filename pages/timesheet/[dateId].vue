@@ -15,7 +15,7 @@ const store = useTimesheetStore()
 const { timeSheetRowsStyled, isTimeSheetCreated, currentDate, timeSheetEdited } = storeToRefs(store)
 const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay } = store
 
-const { goToAmpTicket, createFeature, createIncident } = useAmp()
+const { goToAmpTicket, createFeature, createIncident, goToClientAmpTicketList } = useAmp()
 
 const chartPanelOpened = ref(false)
 const ampPanelOpened = ref(false)
@@ -263,6 +263,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                                 @click="fillAmp(row, index, false)" variant="ghost" />
                             <UButton v-else-if="row.amp" icon="i-heroicons-check" color="green"
                                 @click="fillAmp(row, index, true)" />
+                            <UButton v-else-if="!row.amp && row.client" icon="i-material-symbols-view-list-outline" @click="goToClientAmpTicketList(row.client)"></UButton>
                             <span v-else class="w-8"></span>
                             <UInput v-model="row.amp" :color="row.ampFilled ? 'green' : 'white'" class="w-28" />
                             <UTooltip :text="`Go to AMP ticket (${workByAmpArray.find(r => r.amp === row.amp)?.total})`"
