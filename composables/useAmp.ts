@@ -9,7 +9,7 @@ export default function useAmp() {
     }
 
     const goToClientAmpTicketList = (client: string) => {
-        window.open(`https://amp.service-now.com/now/nav/ui/classic/params/target/task_list.do%3Fsysparm_query%3Dsys_class_name%253Dincident%255EORsys_class_name%253Dsc_req_item%255EORsys_class_name%253Dproblem%255Eassignment_group%253D1221c06fc36a55107bdb75d4e40131fd%255EGOTOcompany.nameLIKE${client}%2520Offshore%255Eclosed_atISEMPTY%255EORDERBYDESCsys_updated_on%26sysparm_first_row%3D1%26sysparm_view%3D`, '_blank')
+        window.open(`https://amp.service-now.com/now/nav/ui/classic/params/target/task_list.do%3Fsysparm_query%3Dsys_class_name%253Dincident%255EORsys_class_name%253Dsc_req_item%255EORsys_class_name%253Dproblem%255Eassignment_group%253D1221c06fc36a55107bdb75d4e40131fd%255EGOTOcompany.nameLIKE${client}%255Eclosed_atISEMPTY%255EORDERBYDESCsys_updated_on%26sysparm_first_row%3D1%26sysparm_view%3D`, '_blank')
     }
 
     const createIncident = () => {
