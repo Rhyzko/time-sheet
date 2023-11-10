@@ -10,11 +10,12 @@ definePageMeta({
 })
 
 const route = useRoute()
+
 const store = useTimesheetStore()
+const { timeSheetRowsStyled, isTimeSheetCreated, currentDate, timeSheetEdited } = storeToRefs(store)
+const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay } = store
 
-const { timeSheetRowsStyled, timeSheetRowsHistory, isTimeSheetCreated, currentDate, timeSheetEdited } = storeToRefs(store)
-
-const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay, undo } = store
+const { goToAmpTicket, createFeature, createIncident } = useAmp()
 
 const chartPanelOpened = ref(false)
 const ampPanelOpened = ref(false)
@@ -25,47 +26,6 @@ const { clientList, fetchClients } = useTimeSheetDatabase()
 
 const dayDisplayMode = ref(false)
 const copiedRow = ref<TimeRow | undefined>(undefined)
-
-const ampColumns = [
-    {
-        label: 'AMP',
-        key: 'amp',
-        sortable: true,
-    },
-    {
-        label: 'Client',
-        key: 'client',
-        sortable: true,
-    },
-    {
-        label: 'Total',
-        key: 'total',
-        sortable: true,
-    },
-    {
-        label: 'Go to ticket',
-        key: 'goToTicket'
-    }
-]
-
-const ampTables = [
-    {
-        label: 'In a nutshell',
-        icon: 'i-heroicons-information-circle',
-        slot: 'nutshell'
-    },
-    {
-        label: 'Tickets to fill in AMP',
-        icon: 'i-material-symbols-drive-file-rename-outline-rounded',
-        defaultOpen: true,
-        slot: 'amp-not-filled'
-    },
-    {
-        label: 'All tickets',
-        icon: 'i-material-symbols-view-list-outline',
-        slot: 'all'
-    }
-]
 
 const setDayDisplayMode = () => {
     dayDisplayMode.value = !dayDisplayMode.value
@@ -153,29 +113,6 @@ const resetRow = (row: any, index: number) => {
     checkRow(row);
 };
 
-const goToAmpTicket = (ticketNumber: string) => {
-    window.open(`https://amp.service-now.com/nav_to.do?uri=/task_list.do?sysparm_query=sys_class_name=incident^ORsys_class_name=sc_req_item^number=${ticketNumber}^ORDERBYDESCsys_created_on&sysparm_first_row=1&sysparm_view=`, '_blank')
-}
-
-const createIncident = () => {
-    window.open(`https://amp.service-now.com/nav_to.do?uri=%2Fcom.glideapp.servicecatalog_cat_item_view.do%3Fv%3D1%26sysparm_id%3D01588fa88712999033bb21f8dabb35aa%26sysparm_link_parent%3Dc767627f87b99594c0e931573cbb35ef%26sysparm_catalog%3D58a300344f2dcb0069a027201310c7ff%26sysparm_catalog_view%3Dcatalog_cms_internal%26sysparm_view%3Dcatalogs_default`, '_blank')
-}
-
-const createFeature = () => {
-    window.open(`https://amp.service-now.com/nav_to.do?uri=%2Fcom.glideapp.servicecatalog_cat_item_view.do%3Fv%3D1%26sysparm_id%3D36683430c31ed9907bdb75d4e4013196%26sysparm_link_parent%3Dc767627f87b99594c0e931573cbb35ef%26sysparm_catalog%3D58a300344f2dcb0069a027201310c7ff%26sysparm_catalog_view%3Dcatalog_cms_internal%26sysparm_view%3D`, '_blank')
-}
-
-const workRepartitionDataset = computed(() => {
-    return clientList.value.map((client) => {
-        const workHours = timeSheetRowsStyled.value.filter((row) => row.client === client.label).reduce((acc, row) => acc + Number(row.timeSpent), 0);
-        return {
-            label: client.label,
-            color: client.color,
-            value: workHours
-        }
-    })
-})
-
 const workByAmp = computed(() => {
     return timeSheetRowsStyled.value.reduce((acc, row) => {
         const amp: string = row.amp ?? ''
@@ -208,29 +145,12 @@ function decimalToTime(decimalValue: number) {
     return `${hours.toString()}h ${minutes.toString()}m`;
 }
 
-const totalAmp = computed(() => {
-    return timeSheetRowsStyled.value.filter((row) => row.ampFilled).reduce((acc, row) => acc + Number(row.timeSpent), 0)
-})
-
-const totalTime = computed(() => {
-    const total = timeSheetRowsStyled.value.filter((row) => row.type === 'work').reduce((acc, row) => acc + Number(row.timeSpent), 0);
-    if (isNaN(total)) {
-        return null;
-    }
-    return total;
-})
-
 const getRowTimeTooltip = (row: TimeRow) => {
     if (row.type === 'work' && !row.halfDay) {
         const totalDay = timeSheetRowsStyled.value.filter((r) => r.date && r.date === row.date).reduce((acc, r) => acc + Number(r.timeSpent), 0)
         if (isNaN(totalDay)) return 'Il reste 7.7h à saisir'
         return totalDay.toFixed(1) === '7.7' ? null : `Il reste ${(7.7 - totalDay).toFixed(1)}h à saisir`
     }
-}
-
-const goToAmpTicketList = (ticketList: string[]) => {
-    const formattedList = ticketList.filter(ticket => ticket).join('%252C')
-    window.open(`https://amp.service-now.com/now/nav/ui/classic/params/target/task_list.do%3Fsysparm_query%3Dsys_class_name%253Dincident%255EORsys_class_name%253Dsc_req_item%255EnumberIN${formattedList}%255EORDERBYnumber%26sysparm_first_row%3D1%26sysparm_view%3D`, '_blank')
 }
 
 const checkRowAndAmpFilled = (row: TimeRow) => {
@@ -262,7 +182,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
             </span>
             <span v-else class="flex flex-row gap-2">
                 <UTooltip text="will be available soon 😉">
-                    <UButton icon="i-mdi-undo" disabled @click="undo"></UButton>
+                    <UButton icon="i-mdi-undo" disabled></UButton>
                 </UTooltip>
                 <UTooltip text="will be available soon 😉">
                     <UButton icon="i-mdi-redo" disabled></UButton>
@@ -298,7 +218,8 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
             <div>
                 <div v-for="(row, index) in timeSheetRowsStyled" :key="`${row.date}-${index}`">
                     <div class="flex flex-row gap-2 py-1 items-center" :class="row.class"
-                        v-if="dayDisplayMode ? row.date === useDateFormat(new Date(), 'DD-MM').value : true" v-auto-animate>
+                        v-if="dayDisplayMode ? (row.date === useDateFormat(new Date(), 'DD-MM').value || row.date === useDateFormat(new Date(), 'ddd DD-MM').value) : true"
+                        v-auto-animate>
                         <section class="flex flex-row w-20 shrink-0 align-middle">
                             <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date"
                                 icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-12">
@@ -387,68 +308,10 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
             <USkeleton class="h-8 my-3 w-full" v-for="line in 10" />
         </section>
         <USlideover v-model="chartPanelOpened">
-            <UCard class="flex flex-col flex-1"
-                :ui="{ body: { base: 'flex-1' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
-                <template #header>
-                    <div class="text-center text-2xl">Work repartition</div>
-                </template>
-                <DonutChart :dataset="workRepartitionDataset" />
-            </UCard>
+            <WorkRepartition :categories="clientList" :rows="timeSheetRowsStyled" />
         </USlideover>
         <USlideover v-model="ampPanelOpened" :ui="{ width: 'w-screen max-w-[50%]' }" side="left">
-            <UCard class="flex flex-col" :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
-                <template #header>
-                    <div class="text-center text-2xl">AMP View</div>
-                </template>
-                <UAccordion :items="ampTables" multiple class="mt-4">
-                    <template #nutshell>
-                        <UCard :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">
-                            <section class="flex flex-row items-center place-content-between">
-                                <div class="flex flex-col text-sm text-primary">
-                                    <p>Chargeable time {{ totalAmp.toFixed(1) }}</p>
-                                    <p>Chargeability
-                                        <span class="text-sm font-medium">{{ ((totalAmp ?? 0) / (totalTime ?? 1) *
-                                            100).toFixed(1)
-                                        }}</span>
-                                        %
-                                    </p>
-                                    <p>Time without AMP ticket : {{ ((totalTime ?? 0) - totalAmp).toFixed(1) }}</p>
-                                </div>
-                                <div>
-                                    <UButton @click="goToAmpTicketList(workByAmpArray.map(row => row.amp))" class="ml-2"
-                                        icon="i-material-symbols-list-alt-outline-rounded" />
-                                </div>
-                            </section>
-                        </UCard>
-                    </template>
-                    <template #amp-not-filled>
-                        <UCard v-if="workByAmpArray.filter(row => row.amp && row.toFill > 0).length"
-                            :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">
-                            <UTable :rows="workByAmpArray.filter(row => row.amp && row.toFill > 0)" :columns="ampColumns">
-                                <template #goToTicket-data="{ row }">
-                                    <UButton v-if="row.amp" icon="i-heroicons-arrow-right-circle"
-                                        @click="goToAmpTicket(row.amp)" />
-                                    <span v-else class="w-8"></span>
-                                </template>
-                            </UTable>
-                        </UCard>
-                        <UCard v-else :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">You're up to date in
-                            AMP,
-                            congrats !</UCard>
-                    </template>
-                    <template #all>
-                        <UCard :ui="{ ring: 'ring-1 ring-primary dark:ring-primary m-2' }">
-                            <UTable :rows="workByAmpArray.filter(row => row.amp)" :columns="ampColumns">
-                                <template #goToTicket-data="{ row }">
-                                    <UButton v-if="row.amp" icon="i-heroicons-arrow-right-circle"
-                                        @click="goToAmpTicket(row.amp)" />
-                                    <span v-else class="w-8"></span>
-                                </template>
-                            </UTable>
-                        </UCard>
-                    </template>
-                </UAccordion>
-            </UCard>
+            <AmpView :workByAmpArray="workByAmpArray" />
         </USlideover>
         <UNotifications />
     </div>

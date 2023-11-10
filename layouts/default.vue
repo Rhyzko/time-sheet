@@ -17,8 +17,11 @@ const logout = async () => {
         </NuxtLink>
 
         <span class="ml-auto">
-            <NuxtLink to="/settings" class="ml-auto" v-if="user">
+            <NuxtLink to="/settings" class="ml-auto" v-if="user && router.currentRoute.value.name !== 'settings'">
                 <UButton icon="i-heroicons-cog-6-tooth" class="ml-auto" />
+            </NuxtLink>
+            <NuxtLink to="/" class="ml-auto" v-if="user && router.currentRoute.value.name === 'settings'">
+                <UButton icon="i-mdi-list-box" class="ml-auto" />
             </NuxtLink>
             <ColorModeButton class="mr-2" />
             <span class="cursor-pointer mr-2" v-if="user">
@@ -33,7 +36,7 @@ const logout = async () => {
         <UDivider />
         <div class="flex flex-row items-center justify-center bg-white dark:bg-slate-800">
             <p class="text-gray-500 dark:text-gray-400 text-sm flex flex-row align-middle items-center">
-                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.1.0, made with
+                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.1.1, made with
                 <NuxtLink to="https://nuxt.com/" target="_blank">
                     <Icon name="logos:nuxt-icon" />
                 </NuxtLink>
