@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useStorage } from '@vueuse/core'
+
 definePageMeta({
     validate: async (currentRoute) => {
         if (typeof currentRoute.params.dateId !== 'string') {
@@ -23,6 +25,8 @@ const ampPanelOpened = ref(false)
 const saveToast = useToast()
 
 const { clientList, fetchClients } = useTimeSheetDatabase()
+
+const filteredClientList = ref<Client[]>([])
 
 const dayDisplayMode = ref(false)
 const copiedRow = ref<TimeRow | undefined>(undefined)
@@ -102,6 +106,7 @@ onMounted(async () => {
     await getTimesheet(route.params.dateId as string)
     await fetchClients()
     timeSheetEdited.value = false;
+    filteredClientList.value = clientList.value.filter(client => useStorage(client.label, true).value)
 })
 
 const resetRow = (row: any, index: number) => {
@@ -200,7 +205,7 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                                 @click="setDayOn(row, index)" class="ml-12" />
                         </section>
                         <span class="w-20 text-sm text-right shrink-0"> {{ row.date }}</span>
-                        <USelectMenu v-model="row.client" :options="clientList" value-attribute="label"
+                        <USelectMenu v-model="row.client" :options="filteredClientList" value-attribute="label"
                             v-if="row.type === 'work'" :ui="{ base: 'w-44' }">
                             <template #option="{ option }">
                                 <span class="w-4 h-4 rounded-sm" :style="{ background: `${option.color}` }">

@@ -16,7 +16,11 @@ declare interface Client {
     id: number,
     color: string | null,
     tags: string | null,
-    chargeable: boolean | undefined
+    chargeable: boolean | undefined | null
+}
+
+declare interface ClientByUser extends Client {
+    visible: RemovableRef<boolean>
 }
 
 declare interface TimeSheet {

@@ -53,25 +53,7 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         await getTimeSheet(dateId, userId)
 
         isTimeSheetCreated.value = monthTimeSheet.value !== undefined
-        timeSheetRowsStyled.value = [...(monthTimeSheet.value?.content ?? []).map((row: TimeRow) => {
-            return {
-                ...row,
-                class: row.type === 'off' ? 'bg-red-100 dark:bg-red-900' : row.type === 'weekend' ? 'bg-gray-200 dark:bg-slate-600' : 'py-0'
-            }
-        })]
-        const selectedMonthAndYear = useDateFormat(currentDate.value, 'YYYY-MM').value;
-        const currentMonthAndYear = useDateFormat(new Date(), 'YYYY-MM').value;
-        if (selectedMonthAndYear < currentMonthAndYear) {
-            timeSheetRowsStyled.value.filter(row => row.type === 'work').forEach((row) => {
-                checkRow(row);
-            });
-        } else {
-            timeSheetRowsStyled.value.filter(row => row.type === 'work'
-                && row.date && parseInt(row.date.slice(-5, -3)) <= new Date().getDate()
-            ).forEach((row) => {
-                checkRow(row);
-            });
-        }
+        styleTimeSheet()
     }
 
     async function createTimesheet() {
@@ -84,6 +66,7 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         const res = await createTimeSheet(timeSheet)
         if (res) {
             isTimeSheetCreated.value = true;
+            styleTimeSheet()
         }
     }
 
@@ -117,6 +100,28 @@ export const useTimesheetStore = defineStore('timesheet', () => {
                 comment: '',
                 type: getDayType(date)
             })
+        }
+    }
+
+    function styleTimeSheet() {
+        timeSheetRowsStyled.value = [...(monthTimeSheet.value?.content ?? []).map((row: TimeRow) => {
+            return {
+                ...row,
+                class: row.type === 'off' ? 'bg-red-100 dark:bg-red-900' : row.type === 'weekend' ? 'bg-gray-200 dark:bg-slate-600' : 'py-0'
+            }
+        })]
+        const selectedMonthAndYear = useDateFormat(currentDate.value, 'YYYY-MM').value;
+        const currentMonthAndYear = useDateFormat(new Date(), 'YYYY-MM').value;
+        if (selectedMonthAndYear < currentMonthAndYear) {
+            timeSheetRowsStyled.value.filter(row => row.type === 'work').forEach((row) => {
+                checkRow(row);
+            });
+        } else {
+            timeSheetRowsStyled.value.filter(row => row.type === 'work'
+                && row.date && parseInt(row.date.slice(-5, -3)) <= new Date().getDate()
+            ).forEach((row) => {
+                checkRow(row);
+            });
         }
     }
 

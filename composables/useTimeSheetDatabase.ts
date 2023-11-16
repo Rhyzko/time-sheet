@@ -46,7 +46,7 @@ export default function useTimeSheetDatabase() {
     }
 
     const addClient = async (label: string) => {
-        const { data, error } = await supabase.from('clients').insert([{ label: label }]).select('id, label, color, tags')
+        const { data, error } = await supabase.from('clients').insert([{ label: label }]).select('id, label, color, tags, chargeable')
         if (error) {
             console.error(error)
         } else {
