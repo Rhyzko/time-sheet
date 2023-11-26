@@ -191,14 +191,17 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                         v-if="dayDisplayMode ? (row.date === useDateFormat(new Date(), 'DD-MM').value || row.date === useDateFormat(new Date(), 'ddd DD-MM').value) : true"
                         v-auto-animate>
                         <section class="flex flex-row w-20 shrink-0 align-middle">
-                            <UButton v-if="index > 0 && row.date === timeSheetRowsStyled[index - 1].date"
-                                icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-12">
-                            </UButton>
-                            <UButton icon="i-heroicons-plus" @click="splitDay(row, index)" v-else-if="row.type === 'work'"
+                            <UButton icon="i-heroicons-plus" @click="splitDay(row, index)"
+                                v-if="row.type === 'work' && (index === 0 || index > 0 && timeSheetRowsStyled[index - 1].date !== row.date)"
                                 class="ml-2">
                             </UButton>
+                            <span v-else class="w-12"></span>
+                            <UButton
+                                v-if="row.type === 'work' && timeSheetRowsStyled.filter(r => r.date === row.date).length > 1"
+                                icon="i-heroicons-minus" @click="removeRow(row, index)" class="ml-2">
+                            </UButton>
                             <UButton icon="i-material-symbols-beach-access-outline-rounded" @click="setDayOff(row, index)"
-                                v-if="row.type === 'work' && (index === 0 || index > 0 && row.date !== timeSheetRowsStyled[index - 1].date) && !row.halfDay"
+                                v-if="row.type === 'work' && timeSheetRowsStyled.filter(r => r.date === row.date).length === 1 && !row.halfDay"
                                 class="ml-2" />
                             <Icon v-if="row.halfDay" name="mdi:fraction-one-half" class="ml-4" />
                             <UButton v-if="row.type === 'off'" icon="i-heroicons-arrow-uturn-left"
