@@ -49,7 +49,7 @@ const selectColor = async (color: string, clientId: number) => {
       </section>
       <UTooltip :text="client.chargeable ? 'Chargeable' : 'Not chargeable'">
         <UToggle on-icon="i-heroicons-check-20-solid" off-icon="i-heroicons-x-mark-20-solid"
-          :v-model="client.chargeable ? true : false" disabled class="disabled:cursor-auto" />
+          :modelValue="client.chargeable ? true : false" disabled class="disabled:cursor-auto" />
       </UTooltip>
     </UCard>
     <UCard class="w-56">
