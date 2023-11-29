@@ -174,12 +174,6 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         return `${hours.toString()}h ${minutes.toString()}m`;
     }
 
-    function undo() {
-    }
-
-    function redo() {
-    }
-
     watch(() => timeSheetRowsStyled, () => {
         timeSheetEdited.value = true
     }, { deep: true })
@@ -201,8 +195,6 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         checkRow,
         splitDay,
         fillAmp,
-        validateAmpInput,
-        undo,
-        redo
+        validateAmpInput
     }
 })
