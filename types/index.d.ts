@@ -29,3 +29,21 @@ declare interface TimeSheet {
     userId: string,
     content: Json
 }
+
+declare interface UserTimeSheet extends TimeSheet {
+    user: UserTimeSheetProfile | null
+    timeRows: TimeRow[]
+}
+
+declare interface UserTimeSheetProfile {
+    id: string,
+    firstName: string | null,
+    lastName: string | null,
+    email: string | null,
+}
+
+declare interface User {
+    id: string,
+    email: string,
+    role: 'Developer' | 'Manager'
+}

@@ -15,6 +15,22 @@ export default function useTimeSheetDatabase() {
         }
     }
 
+    const getTimeSheets = async (dateId: string) => {
+        const { data, error } = await supabase
+            .from('timesheets')
+            .select(`
+                *, 
+                user:profiles ( id, firstName, lastName, email)
+                `)
+            .eq('label', dateId)
+
+        if (error) {
+            console.error(error);
+        } else {
+            return data;
+        }
+    }
+
     const updateTimeSheet = async (timeSheetRows: any) => {
         const { data, error } = await supabase.from('timesheets').update({ content: timeSheetRows }).match({ id: monthTimeSheet.value?.id ?? 0 }).select('*')
         if (error) {
@@ -81,6 +97,15 @@ export default function useTimeSheetDatabase() {
         }
     }
 
+    const getCurrentUser = async (userId: string) => {
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', userId)
+        if (error) {
+            console.error(error);
+        } else {
+            return data[0];
+        }
+    }
+
     return {
         clientList,
         monthTimeSheet,
@@ -89,7 +114,9 @@ export default function useTimeSheetDatabase() {
         deleteClient,
         updateClientColor,
         getTimeSheet,
+        getTimeSheets,
         updateTimeSheet,
-        createTimeSheet
+        createTimeSheet,
+        getCurrentUser
     }
 }

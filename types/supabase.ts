@@ -33,6 +33,41 @@ export interface Database {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          clientsPreferences: Json[] | null
+          email: string | null
+          firstName: string | null
+          id: string
+          lastName: string | null
+          role: string | null
+        }
+        Insert: {
+          clientsPreferences?: Json[] | null
+          email?: string | null
+          firstName?: string | null
+          id: string
+          lastName?: string | null
+          role?: string | null
+        }
+        Update: {
+          clientsPreferences?: Json[] | null
+          email?: string | null
+          firstName?: string | null
+          id?: string
+          lastName?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       timesheets: {
         Row: {
           content: Json | null
@@ -57,7 +92,7 @@ export interface Database {
             foreignKeyName: "timesheets_userId_fkey"
             columns: ["userId"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           }
         ]

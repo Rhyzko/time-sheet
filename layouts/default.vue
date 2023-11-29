@@ -3,10 +3,18 @@ const { auth } = useSupabaseClient()
 const router = useRouter()
 const user = useSupabaseUser()
 
+const userStore = useUserStore()
+const { getUser } = userStore
+const { currentUser } = storeToRefs(userStore)
+
 const logout = async () => {
     await auth.signOut()
     router.push('/login')
 }
+
+onMounted(async () => {
+    await getUser()
+})
 </script>
 
 <template>
@@ -15,12 +23,15 @@ const logout = async () => {
         <NuxtLink to="/">
             <h2 class="font-bold text-xl text-orange-500 ml-2">Avatime-sheet</h2>
         </NuxtLink>
-
         <span class="ml-auto">
+            <NuxtLink to="/dashboard" class="ml-auto mr-2" v-if="user && currentUser?.role === 'Manager'">
+                <UButton icon="i-material-symbols-dashboard" class="ml-auto" />
+            </NuxtLink>
             <NuxtLink to="/settings" class="ml-auto" v-if="user && router.currentRoute.value.name !== 'settings'">
                 <UButton icon="i-heroicons-cog-6-tooth" class="ml-auto" />
             </NuxtLink>
-            <NuxtLink to="/" class="ml-auto" v-if="user && router.currentRoute.value.name === 'settings'">
+            <NuxtLink to="/" class="ml-auto"
+                v-if="user && currentUser?.role === 'Developer' && router.currentRoute.value.name === 'settings'">
                 <UButton icon="i-mdi-list-box" class="ml-auto" />
             </NuxtLink>
             <ColorModeButton class="mr-2" />
@@ -36,7 +47,7 @@ const logout = async () => {
         <UDivider />
         <div class="flex flex-row items-center justify-center bg-white dark:bg-slate-800">
             <p class="text-gray-500 dark:text-gray-400 text-sm flex flex-row align-middle items-center">
-                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.2.3, made with
+                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.3.0
                 <NuxtLink to="https://nuxt.com/" target="_blank">
                     <Icon name="logos:nuxt-icon" />
                 </NuxtLink>

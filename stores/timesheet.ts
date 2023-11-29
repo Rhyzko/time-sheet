@@ -1,6 +1,7 @@
 export const useTimesheetStore = defineStore('timesheet', () => {
     const {
         getTimeSheet,
+        getTimeSheets,
         updateTimeSheet,
         createTimeSheet,
         monthTimeSheet,
@@ -12,6 +13,8 @@ export const useTimesheetStore = defineStore('timesheet', () => {
     const isTimeSheetCreated = ref(false)
     const currentDate = ref(new Date())
     const timeSheetEdited = ref(false)
+
+    const timesheets = ref<UserTimeSheet[]>([])
 
     const workByAmp = computed(() => {
         return timeSheetRowsStyled.value.reduce((acc, row) => {
@@ -38,6 +41,10 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         }))
     })
 
+    const currentDateId = computed(() => {
+        return useDateFormat(currentDate.value, 'YYYY-MM').value
+    })
+
     function checkRow(row: any) {
         const totalValues = row.halfDay ? ['3.8', '3.9'] : ['7.7'];
         const impactedRows = timeSheetRowsStyled.value.filter((r) => r.date === row.date);
@@ -48,12 +55,29 @@ export const useTimesheetStore = defineStore('timesheet', () => {
     };
 
     async function getTimesheet(dateId: string) {
-        currentDate.value = new Date(dateId);
+        currentDate.value = new Date(dateId)
         const userId = user.value?.id ?? ''
         await getTimeSheet(dateId, userId)
 
         isTimeSheetCreated.value = monthTimeSheet.value !== undefined
         styleTimeSheet()
+    }
+
+    async function getTimesheets(dateId: string) {
+        currentDate.value = new Date(dateId)
+        const timeSheets = await getTimeSheets(dateId)
+        if (timeSheets) {
+            timesheets.value = timeSheets.map((timeSheet: any) => {
+                return {
+                    ...timeSheet,
+                    timeRows: TimeSheetToTimerows(timeSheet),
+                }
+            })
+        }
+    }
+
+    function TimeSheetToTimerows(timeSheet: TimeSheet) {
+        return timeSheet.content.map((row: TimeRow) => ({ ...row }))
     }
 
     async function createTimesheet() {
@@ -165,10 +189,13 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         timeSheetRowsHistory,
         isTimeSheetCreated,
         currentDate,
+        currentDateId,
         monthTimeSheet,
+        timesheets,
         timeSheetEdited,
         workByAmpArray,
         getTimesheet,
+        getTimesheets,
         updateTimesheet,
         createTimesheet,
         checkRow,
