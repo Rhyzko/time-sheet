@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const props = defineProps({
-    dataset: Array
+    dataset: {
+        type: Array,
+        required: true
+    }
 })
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
@@ -13,17 +16,19 @@ const chartOptions = {
     maintainAspectRatio: false,
 }
 
-const filteredData = props.dataset?.filter((d: any) => d.value > 0) ?? []
-
-const totalValue = filteredData.reduce((acc: number, d: any) => acc + d.value, 0)
-const labelsWithPercentage = filteredData.map((d: any) => `${d.label} (${Math.round((d.value / totalValue) * 100)}%)`)
-
-const chartData = {
-    labels: labelsWithPercentage,
-    datasets: [{ data: filteredData.map((d: any) => d.value), backgroundColor: filteredData.map((d: any) => d.color) }]
-}
+const chartData = computed(() => {
+    return {
+        labels: props.dataset.filter((d: any) => d.value > 0).map((d: any) => `${d.label} (${Math.round((d.value / props.dataset.reduce((acc: number, d: any) => acc + d.value, 0)) * 100)}%)`),
+        datasets: [
+            {
+                data: props.dataset.filter((d: any) => d.value > 0),
+                backgroundColor: props.dataset.filter((d: any) => d.value > 0).map((d: any) => d.color),
+                borderWidth: 1
+            }
+        ]
+    }
+})
 </script>
-
 
 <template>
     <div>

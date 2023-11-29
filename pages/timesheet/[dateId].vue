@@ -14,8 +14,8 @@ definePageMeta({
 const route = useRoute()
 
 const store = useTimesheetStore()
-const { timeSheetRowsStyled, isTimeSheetCreated, currentDate, timeSheetEdited } = storeToRefs(store)
-const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay, fillAmp, workByAmpArray } = store
+const { timeSheetRowsStyled, isTimeSheetCreated, currentDate, timeSheetEdited, workByAmpArray } = storeToRefs(store)
+const { getTimesheet, updateTimesheet, createTimesheet, checkRow, splitDay, fillAmp } = store
 
 const { goToAmpTicket, createFeature, createIncident, goToClientAmpTicketList } = useAmp()
 
@@ -151,12 +151,6 @@ window.onbeforeunload = () => (timeSheetEdited.value ? true : null);
                 <UButton @click="createTimesheet" icon="i-material-symbols-create-new-folder" />
             </span>
             <span v-else class="flex flex-row gap-2">
-                <UTooltip text="will be available soon 😉">
-                    <UButton icon="i-mdi-undo" disabled></UButton>
-                </UTooltip>
-                <UTooltip text="will be available soon 😉">
-                    <UButton icon="i-mdi-redo" disabled></UButton>
-                </UTooltip>
                 <UButton @click="updateTimeSheet" icon="i-material-symbols-save-outline-rounded"
                     :disabled="!timeSheetEdited" :color="timeSheetEdited ? 'primary' : 'gray'" />
             </span>
