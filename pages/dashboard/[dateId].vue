@@ -47,7 +47,8 @@ const timeGroupedByClient = computed(() => {
         return {
             label: c.client,
             value: c.timeSpent,
-            color: clientList.value.find((c) => c.label === c.label)?.color
+            color: clientList.value.find((c) => c.label === c.label)?.color,
+            chargeable: clientList.value.find((c) => c.label === c.label)?.chargeable
         }
     })
 })
@@ -65,12 +66,16 @@ const getTotalClientForUser = (user: UserTimeSheet, client: Client, dayDisplay: 
     return total ? dayDisplay ? (total / 7.7).toFixed(1) : total.toFixed(1) : ''
 }
 
-const totalTimeSpentByUser = (user: UserTimeSheet) => {
+const totalTimeSpentByUser = (user: UserTimeSheet, onlyChargeable: boolean = false) => {
     const userTimesheet = timesheets.value.find(t => t.userId === user.user?.id)
     if (!userTimesheet) {
         return 0
     }
-    const rows = userTimesheet.timeRows.filter(r => r.timeSpent).map(r => r.timeSpent)
+    let rows = userTimesheet.timeRows.filter(r => r.timeSpent).map(r => r.timeSpent)
+    if (onlyChargeable) {
+        const chargeableClientLabels = clientList.value.filter(c => c.chargeable).map(c => c.label)
+        rows = userTimesheet.timeRows.filter(r => chargeableClientLabels.includes(r.client ?? '')).map(r => r.timeSpent)
+    }
     const total = rows.reduce((acc, row) => {
         if (!acc) {
             acc = 0
@@ -80,6 +85,23 @@ const totalTimeSpentByUser = (user: UserTimeSheet) => {
         }
     }, 0)
     return total
+}
+
+const getClientTotal = (client: Client) => {
+    const total = timeGroupedByClient.value.find(t => t.label === client.label)?.value
+    if (!total) {
+        return ''
+    }
+    return daysDisplay.value ? (total / 7.7).toFixed(1) : total.toFixed(1)
+}
+
+const getChargeability = (user: UserTimeSheet) => {
+    const totalClient = totalTimeSpentByUser(user, true)
+    const total = totalTimeSpentByUser(user)
+    if (!totalClient || !total) {
+        return ''
+    }
+    return ((totalClient / total) * 100).toFixed(1) + '%'
 }
 
 const userDaysFilled = (user: UserTimeSheet) => {
@@ -115,22 +137,44 @@ const daysDisplay = ref(false)
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="client in clientList" :key="client.id"
+                    <tr v-for="client in clientList.filter(c => c.chargeable)" :key="client.id"
                         :class="`border-2 text-${getColorLabelFromCode(client.color ?? '')}-500`">
                         <td class="clientLabel">{{ client.label }}
                         </td>
                         <td v-for="user in timesheets.filter(t => t.user?.firstName)" :key="user.id">
                             {{ getTotalClientForUser(user, client, daysDisplay) }}
                         </td>
-                        <td class="border-l-2 font-semibold">{{ (timeGroupedByClient.find(t => t.label ===
-                            client.label)?.value / (daysDisplay ? 7.7 : 1)).toFixed(1)
-                        }}</td>
+                        <td class="border-l-2 font-semibold">{{ getClientTotal(client) }}</td>
                     </tr>
-                    <tr class="border-2">
+                    <tr class="border-y-4 border-x-2">
+                        <td class="clientLabel font-semibold">Total client</td>
+                        <td v-for="userTimesheet in timesheets" :key="userTimesheet.id" class="font-semibold">
+                            {{ daysDisplay ? ((totalTimeSpentByUser(userTimesheet, true) ?? 0) / 7.7).toFixed(1) :
+                                totalTimeSpentByUser(userTimesheet, true)?.toFixed(1) }}
+                        </td>
+                        <td class="border-l-2 bg-gray-200"></td>
+                    </tr>
+                    <tr v-for="client in clientList.filter(c => !c.chargeable)" :key="client.id"
+                        :class="`border-2 text-${getColorLabelFromCode(client.color ?? '')}-500`">
+                        <td class="clientLabel">{{ client.label }}
+                        </td>
+                        <td v-for="user in timesheets.filter(t => t.user?.firstName)" :key="user.id">
+                            {{ getTotalClientForUser(user, client, daysDisplay) }}
+                        </td>
+                        <td class="border-l-2 font-semibold">{{ getClientTotal(client) }}</td>
+                    </tr>
+                    <tr class="border-t-4 border-2">
                         <td class="clientLabel font-semibold">Total</td>
                         <td v-for="userTimesheet in timesheets" :key="userTimesheet.id" class="font-semibold">
                             {{ daysDisplay ? ((totalTimeSpentByUser(userTimesheet) ?? 0) / 7.7).toFixed(1) :
                                 totalTimeSpentByUser(userTimesheet)?.toFixed(1) }}
+                        </td>
+                        <td class="border-l-2 bg-gray-200"></td>
+                    </tr>
+                    <tr class="border-2">
+                        <td class="clientLabel font-semibold">Chargeability</td>
+                        <td v-for="userTimesheet in timesheets" :key="userTimesheet.id" class="font-semibold">
+                            {{ getChargeability(userTimesheet) }}
                         </td>
                         <td class="border-l-2 bg-gray-200"></td>
                     </tr>
