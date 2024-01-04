@@ -47,7 +47,7 @@ onMounted(async () => {
         <UDivider />
         <div class="flex flex-row items-center justify-center bg-white dark:bg-slate-800">
             <p class="text-gray-500 dark:text-gray-400 text-sm flex flex-row align-middle items-center">
-                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.3.2
+                &copy; {{ new Date().getFullYear() }} Avatime-sheet 0.3.3
                 <NuxtLink to="https://nuxt.com/" target="_blank">
                     <Icon name="logos:nuxt-icon" />
                 </NuxtLink>

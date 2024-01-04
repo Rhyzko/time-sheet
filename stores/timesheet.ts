@@ -81,7 +81,7 @@ export const useTimesheetStore = defineStore('timesheet', () => {
     }
 
     async function createTimesheet() {
-        formatMonthTable(currentDate.value.getMonth() + 1)
+        formatMonthTable(currentDate.value.getMonth() + 1, currentDate.value.getFullYear())
         const timeSheet: TimeSheet = {
             label: useDateFormat(currentDate.value, 'YYYY-MM').value,
             userId: user.value?.id ?? '',
@@ -112,11 +112,11 @@ export const useTimesheetStore = defineStore('timesheet', () => {
         })
     }
 
-    function formatMonthTable(month: number) {
-        const numDaysInMonth = new Date(new Date().getFullYear(), month, 0).getDate();
+    function formatMonthTable(month: number, year: number) {
+        const numDaysInMonth = new Date(year, month, 0).getDate();
         timeSheetRowsStyled.value = [];
         for (let i = 1; i <= numDaysInMonth; i++) {
-            const date = new Date(new Date().getFullYear(), month - 1, i);
+            const date = new Date(year, month - 1, i);
             timeSheetRowsStyled.value.push({
                 date: useDateFormat(date, 'ddd DD-MM').value,
                 client: '',
